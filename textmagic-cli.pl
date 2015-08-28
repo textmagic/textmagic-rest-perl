@@ -115,8 +115,8 @@ ACCOUNT INFORMATION
 
 ID          : $user->{id}
 Username    : $user->{username}
-First Name  : $user->{first_name}
-Last Name   : $user->{last_name}
+First Name  : $user->{firstName}
+Last Name   : $user->{lastName}
 Balance     : $user->{balance} $user->{currency}->{id}
 Timezone    : $user->{timezone}->{timezone} ($user->{timezone}->{offset})
 EOT
@@ -139,20 +139,20 @@ sub showAllContacts {
 
 ALL CONTACTS
 ============
-Page $response->{page} of $response->{page_count}
+Page $response->{page} of $response->{pageCount}
 
 EOT
 
     foreach (@contacts) {
         my $contact = $_;
-        print "$contact->{id}. $contact->{first_name} $contact->{last_name}, $contact->{phone}\n";
+        print "$contact->{id}. $contact->{firstName} $contact->{lastName}, $contact->{phone}\n";
     }
         
     my %items = (
         ('Previous page'        => \&goToPreviousPage),
         ('Next page'            => \&goToNextPage),
         ('Show contact details' => \&showContact),
-        ('Delete contact'       => \&exitOk),
+        ('Delete contact'       => \&deleteContact),
         ('Back to main menu'    => \&showMainMenu),
     );
     
@@ -174,9 +174,9 @@ sub showContact {
 CONTACT INFORMATION
 ===================
 
-Name    : $contact->{first_name} $contact->{last_name}
+Name    : $contact->{firstName} $contact->{lastName}
 Phone   : +$contact->{phone} ($contact->{country}->{name})
-Company : $contact->{company_name}
+Company : $contact->{companyName}
 EOT
     
     return showAllContacts();
@@ -211,7 +211,7 @@ sub showAllLists {
 
 ALL LISTS
 =========
-Page $response->{page} of $response->{page_count}
+Page $response->{page} of $response->{pageCount}
 
 EOT
 
@@ -243,7 +243,7 @@ sub showMessagesOut {
 
 SENT MESSAGES
 =============
-Page $response->{page} of $response->{page_count}
+Page $response->{page} of $response->{pageCount}
 
 EOT
 
@@ -290,7 +290,7 @@ sub showMessagesIn {
 
 RECEIVED MESSAGES
 =================
-Page $response->{page} of $response->{page_count}
+Page $response->{page} of $response->{pageCount}
 
 EOT
 
@@ -337,7 +337,7 @@ sub showAllTemplates {
 
 TEMPLATES
 =========
-Page $response->{page} of $response->{page_count}
+Page $response->{page} of $response->{pageCount}
 
 EOT
 
@@ -454,7 +454,7 @@ sub error {
 
 # Show top user info banner
 sub showUserInfo {
-    print 'TextMagic CLI v' . VERSION . " || $user->{first_name} $user->{last_name} ($user->{username}) || $user->{balance} $user->{currency}->{id}\n";
+    print 'TextMagic CLI v' . VERSION . " || $user->{firstName} $user->{lastName} ($user->{username}) || $user->{balance} $user->{currency}->{id}\n";
 }
 
 # Show numered menu and return user choice
