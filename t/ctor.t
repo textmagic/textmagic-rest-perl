@@ -2,8 +2,9 @@ use strict;
 use warnings;
 use Test::More;
 
+BEGIN { use_ok( 'Net::SMS::TextmagicRest' ); }
+
 require_ok( 'Net::SMS::TextmagicRest' );
-use_ok( 'Net::SMS::TextmagicRest' );
 
 my $username = 'jessebangs';
 my $token = 'S4y9ph4H5r4lcSG6ZFdffKUgWnpkAl';
@@ -13,9 +14,9 @@ my $obj = Net::SMS::TextmagicRest->new(user => $username, token => $token, baseU
 
 ok($obj, "Object created with constructor should not be null");
 
-cmp_ok($ojb->getUser(), 'eq', $username, "getUser() reflects param passed in constructor");
-cmp_ok($ojb->getToken(), 'eq', $token, "getToken() reflects param passed in constructor");
-cmp_ok($ojb->getBaseUrl(), 'eq', $baseUrl, "getBaseUrl() reflects param passed in constructor");
+cmp_ok($obj->getUser(), 'eq', $username, "getUser() reflects param passed in constructor");
+cmp_ok($obj->getToken(), 'eq', $token, "getToken() reflects param passed in constructor");
+cmp_ok($obj->getBaseUrl(), 'eq', $baseUrl, "getBaseUrl() reflects param passed in constructor");
 
 # Test no username
 
@@ -26,3 +27,5 @@ ok (not $fail, "Shouldn't create an object without a username");
 $fail = Net::SMS::TextmagicRest->new(user => $username);
 
 ok(not $fail, "Shouldn't create an object without a token");
+
+done_testing();
