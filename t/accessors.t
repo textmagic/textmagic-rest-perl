@@ -4,7 +4,7 @@ use Test::More tests => 10;
 
 use Net::SMS::TextmagicRest;
 
-my @accessors = qw(BaseUrl Username Token Useragent Client);
+my @accessors = qw(BaseUrl Username Token UserAgent Client);
 
 my $username = 'jessebangs';
 my $token = 'S4y9ph4H5r4lcSG6ZFdffKUgWnpkAl';
