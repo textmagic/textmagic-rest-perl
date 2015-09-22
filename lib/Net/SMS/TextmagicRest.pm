@@ -173,11 +173,11 @@ Internal TextMagic user ID.
 
 TextMagic username.
 
-=item first_name
+=item firstName
 
 First name.
 
-=item last_name
+=item lastName
 
 Last name.
 
@@ -187,13 +187,33 @@ Current account balance in account currency points.
 
 =item currency
 
-Compound array contains "id" (3-letter ISO currency code: http://en.wikipedia.org/wiki/ISO_4217)
-and "html_symbol" which can be directly prepended to the "balance" amount.
+A hash reference with the following keys:
+
+=over
+
+=item * C<id> - The 3-letter ISO currency code: http://en.wikipedia.org/wiki/ISO_4217
+
+=item * C<htmlSymbol> - The html entity which which can be directly prepended to the "balance" amount.
+
+=back
 
 =item timezone
 
-Compound array contains "timezone" (account ISO timezone name), "area", "dst" (1 when DST is on, otherwise 0)
-and "offset" (from UTC in minutes).
+A hash reference with the following keys:
+
+=over
+
+=item * C<area> - The account's ISO timezone area (usually one of America, Europe, Asia, or Africa)
+
+=item * C<dst> - When Daylight Savings Time is on in the user's timezone, this is 1, otherwise 0.
+
+=item * C<id> - The ISO timezone ID.
+
+=item * C<offset> - The timezone offset from UTC in minutes.
+
+=item * C<timezone> - The ISO timezone name (something like "America/Chicago").
+
+=back
 
 =back
 
