@@ -1,0 +1,5 @@
+lib/Net/SMS/TextmagicRest.pm
+Makefile.PL
+MANIFEST			This list of files
+t/ctor.t
+textmagic-cli.pl
