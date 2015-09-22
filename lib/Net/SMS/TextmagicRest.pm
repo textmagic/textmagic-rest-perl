@@ -15,6 +15,7 @@ use warnings;
 use diagnostics;
 
 use feature 'switch';
+no warnings 'experimental::smartmatch';
 
 use constant TRUE => 1;
 use constant FALSE => 0;
@@ -2649,24 +2650,25 @@ sub _buildAccessors {
     my @attributes = qw(BaseUrl Username Token UserAgent Client);
 
     for my $attribute (@attributes){
-        my $set_method = "
-        sub {
-        my \$self = shift;
-        \$self->{'_config'}{lc('$attribute')} = shift;
-        return \$self->{'_config'}{lc('$attribute')};
-        }";
+        my $local_attribute = $attribute;
 
-        my $get_method = "
-        sub {
-        my \$self = shift;
-        return \$self->{'_config'}{lc('$attribute')};
-        }";
+        my $set_method = sub {
+            my $self = shift;
+            $self->{'_config'}{$local_attribute} = shift;
+            return $self->{'_config'}{$local_attribute};
+        };
+
+        my $get_method = sub {
+            my $self = shift;
+            return $self->{'_config'}{$local_attribute};
+        };
 
 
         {
             no strict 'refs';
-            *{'Net::SMS::TextmagicRest::set'.$attribute} = eval $set_method ;
-            *{'Net::SMS::TextmagicRest::get'.$attribute} = eval $get_method ;
+            no warnings 'redefine';
+            *{'Net::SMS::TextmagicRest::set'.$attribute} = $set_method;
+            *{'Net::SMS::TextmagicRest::get'.$attribute} = $get_method;
         }
 
     }
