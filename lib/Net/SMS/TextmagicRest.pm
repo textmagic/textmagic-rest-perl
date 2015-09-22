@@ -97,7 +97,7 @@ Net::SMS::TextmagicRest provides a simple way to interact with TextMagic REST AP
 
 Construct a new REST::Client. Takes an optional hash or hash reference or
 config flags. Each config flag also has get/set accessors of the form
-getHost/setHost, getUseragent/setUseragent, etc.  These can be called on the
+getHost/setHost, getUserAgent/setUserAgent, etc.  These can be called on the
 instantiated object to change or check values.
 
 Usage:
@@ -147,6 +147,7 @@ sub new {
     $self->setUsername($args{username});
     $self->setToken($args{token});
     $self->setBaseUrl($args{baseUrl});
+    $self->setUserAgent($args{userAgent});
     $self->_buildClient();
     
     $self->{previousRequestTime} = 0;
@@ -2688,7 +2689,7 @@ sub _buildClient {
     $client->addHeader('X-TM-Username', $self->getUsername());
     $client->addHeader('X-TM-Key', $self->getToken());
     $client->addHeader('Content-type', 'application/x-www-form-urlencoded');
-    $client->getUseragent()->agent("Net::SMS::TextmagicRest/" . $VERSION);
+    $client->getUseragent()->agent($self->getUserAgent());
     
     $self->setClient($client);
 
