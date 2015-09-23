@@ -5,7 +5,7 @@ use JSON;
 use Net::SMS::TextmagicRest;
 use REST::Client;
 use Test::MockModule;
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 my $username = 'jessebangs';
 my $token = 'S4y9ph4H5r4lcSG6ZFdffKUgWnpkAl';
@@ -83,6 +83,21 @@ my $result = $tm->setUserInfo(%mock_setinfo);
 cmp_ok($captured_resource, 'eq', "/user", "calling setUserInfo should put to /user");
 is_deeply(JSON::decode_json("{$captured_data"), $munged_setinfo, "calling setUserInfo should pass the expected data structure");
 is_deeply($result, { success => 'ok' }, "json from responseContent was decoded and returned as expected");
+
+#
+# setUserInfo handling of bad params
+#
+eval {
+    $result = $tm->setUserInfo(firstName => "Tester", foo => "val");
+    fail("setUserInfo without last name should fail");
+};
+like($@, qr/firstName and lastName should be specified/, "expected error message was not found");
+
+eval {
+    $result = $tm->setUserInfo(lastName => "McTesterson", foo => "val");
+    fail("setUserInfo without last name should fail");
+};
+like($@, qr/firstName and lastName should be specified/, "expected error message was not found");
 
 # 
 # setUserInfo handling of an error message returned from the server
