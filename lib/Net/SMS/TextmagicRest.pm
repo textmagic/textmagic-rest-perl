@@ -424,7 +424,7 @@ sub send {
     );    
     
     $self->error('Either text or templateId should be specified') if (!$args{text} && !$args{templateId});
-    $self->error('Either phones, contacts or lists should be specified') if (!$args{phones} && !$args{contacts} && !$args{templates});
+    $self->error('Either phones, contacts or lists should be specified') if (!($args{phones} || $args{contacts} || $args{lists}));
     
     my %requestArgs = convertArgs(\%args);
     
