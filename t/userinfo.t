@@ -24,7 +24,7 @@ my $captured_data = "";
 my $mock = Test::MockModule->new('REST::Client');
 $mock->mock("GET", sub { ($captured_self, $captured_resource, $captured_data) = @_; });
 $mock->mock("PUT", sub { ($captured_self, $captured_resource, $captured_data) = @_; });
-$mock->mock("buildQuery", sub { return JSON::encode_json($_[1]) if $_[1] && keys %{$_[1]}; }); # Encode query strings as JSON, just to make them easy to decode
+$mock->mock("buildQuery", sub { return " " . JSON::encode_json($_[1]) if $_[1] && keys %{$_[1]}; }); # Encode query strings as JSON, just to make them easy to decode
 $mock->mock("responseContent", sub { return $injected_json; });
 $mock->mock("responseCode", sub { return $injected_code });
 
@@ -81,7 +81,7 @@ $injected_code = 204;
 
 my $result = $tm->setUserInfo(%mock_setinfo);
 cmp_ok($captured_resource, 'eq', "/user", "calling setUserInfo should put to /user");
-is_deeply(JSON::decode_json("{$captured_data"), $munged_setinfo, "calling setUserInfo should pass the expected data structure");
+is_deeply(JSON::decode_json($captured_data), $munged_setinfo, "calling setUserInfo should pass the expected data structure");
 is_deeply($result, { success => 'ok' }, "json from responseContent was decoded and returned as expected");
 
 #
