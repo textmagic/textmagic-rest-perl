@@ -238,19 +238,12 @@ sub getUserInfo {
 
 =head3 setUserInfo
 
-Update existing template.
+Updates existing user info based on the arguments passed in. The arguments are a
+hash (not a hash reference) with keys matching the keys returned from
+C<getUserInfo>. See the documentation of that method for details. The keys
+C<firstName> and C<lastName> are required.
 
-=over 4
-
-=item firstName
-
-User first name.
-
-=item lastName
-
-User last name.
-
-=back
+    $tm->setUserInfo(firstName => "First", lastName => "Last", currency => { id => "USD" });
 
 =cut
 
@@ -462,7 +455,7 @@ sub getMessage {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Message ID should be numeric');
     }
     
@@ -533,7 +526,7 @@ sub getReply {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Reply ID should be numeric');
     }
     
@@ -604,7 +597,7 @@ sub getSession {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
     
@@ -692,7 +685,7 @@ sub getSessionMessages {
         @_
     );    
     
-    if (!$args{id} || $args{id} =~ /\D/) {
+    if (!$args{id} || $args{id} !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
     
@@ -723,7 +716,7 @@ sub getSchedule {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Schedule ID should be numeric');
     }
     
@@ -794,7 +787,7 @@ sub getBulk {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Bulk ID should be numeric');
     }
     
@@ -922,7 +915,7 @@ sub getChat {
         @_
     );
     
-    if (!$args{phone} || $args{phone} =~ /\D/) {
+    if (!$args{phone} || $args{phone} !~ /^\d+$/) {
         $self->error('Specify a valid phone number');
     }
     
@@ -987,7 +980,7 @@ sub deleteMessage {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Message ID should be numeric');
     }
     
@@ -1017,7 +1010,7 @@ sub deleteReply {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Reply ID should be numeric');
     }
     
@@ -1047,7 +1040,7 @@ sub deleteSchedule {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Schedule ID should be numeric');
     }
     
@@ -1077,7 +1070,7 @@ sub deleteSession {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
     
@@ -1111,7 +1104,7 @@ sub getTemplate {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Template ID should be numeric');
     }
     
@@ -1182,7 +1175,7 @@ sub deleteTemplate {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Template ID should be numeric');
     }
     
@@ -1455,7 +1448,7 @@ sub getContact {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
     
@@ -1531,7 +1524,7 @@ sub deleteContact {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
     
@@ -1708,7 +1701,7 @@ sub getContactLists {
         @_
     );
     
-    if ($args{id} =~ /\D/) {
+    if ($args{id} !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
     
@@ -1739,7 +1732,7 @@ sub getUnsubscribedContact {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Unsubscriber ID should be numeric');
     }
     
@@ -1852,7 +1845,7 @@ sub getCustomField {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Custom field ID should be numeric');
     }
     
@@ -1923,7 +1916,7 @@ sub deleteCustomField {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Custom field ID should be numeric');
     }
     
@@ -2082,7 +2075,7 @@ sub getList {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
     
@@ -2153,7 +2146,7 @@ sub deleteList {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
     
@@ -2290,7 +2283,7 @@ sub getListContacts {
         @_
     );
     
-    if ($args{id} =~ /\D/) {
+    if ($args{id} !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
     
@@ -2414,7 +2407,7 @@ sub getDedicatedNumber {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Number ID should be numeric');
     }
     
@@ -2575,7 +2568,7 @@ sub cacnelDedicatedNumber {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Dedicated number ID should be numeric');
     }
     
