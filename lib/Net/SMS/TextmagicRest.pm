@@ -1679,6 +1679,13 @@ sub addContact {
     
     $self->error('Contact phone and at least one list should be specified') if (!$args{phone} || !$args{lists});
     
+    if ($args{phone} !~ /^\+?\d+$/) {
+        $self->error('Specify a valid phone number');
+    }
+    if (ref $args{lists} ne 'ARRAY' || join(",", $args{lists}) !~ /\d+(,\d+)*/) {
+        $self->error('Specify a valid array of numeric list ids');
+    }
+
     my %requestArgs = convertArgs(\%args);
     
     $self->request('POST', '/contacts', \%requestArgs);    
@@ -1748,6 +1755,16 @@ sub updateContact {
     
     $self->error('Contact ID, phone and at least one list should be specified') if (!$args{id} || !$args{phone} || !$args{lists});
         
+    if ($args{id} !~ /^\d+$/) {
+        $self->error('Contact ID should be numeric');
+    }
+    if ($args{phone} !~ /^\+?\d+$/) {
+        $self->error('Specify a valid phone number');
+    }
+    if (ref $args{lists} ne 'ARRAY' || join(",", $args{lists}) !~ /\d+(,\d+)*/) {
+        $self->error('Specify a valid array of numeric list ids');
+    }
+
     my %requestArgs = convertArgs(\%args);
     
     $self->request('PUT', '/contacts/' . $args{id}, \%requestArgs);    
@@ -1791,7 +1808,7 @@ sub getContactLists {
         @_
     );
     
-    if ($args{id} !~ /^\d+$/) {
+    if (!$args{id} || $args{id} !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
     if ($args{page} !~ /^\d+$/) {
@@ -1800,9 +1817,10 @@ sub getContactLists {
     if ($args{limit} !~ /^\d+$/) {
         $self->error("limit should be numeric");
     }
+
+    my $id = delete $args{id};
     
-    
-    $self->request('GET', '/contacts/' . $args{id} . '/lists', \%args);
+    $self->request('GET', '/contacts/' . $id . '/lists', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
