@@ -62,7 +62,7 @@ my $tm = Net::SMS::TextmagicRest->new(username => $username, token => $token);
 # 
 # Test sending a basic message with explicit text
 #
-my $test_text = "Test message from TextMagic API";
+my $test_text = "Test_message_from_TextMagic_API";
 my $test_tel1 = "+15555555555";
 my $test_tel2 = "+15555555556";
 $injected_code = 200;
@@ -216,22 +216,22 @@ like($@, qr/test error message/, "expected error message was not thrown");
 # 
 # getChat success case
 #
-$test_text = { text => "test text" };
-$injected_json = JSON::encode_json($test_text);
+$injected_json = JSON::encode_json({ text => $test_text });
 $injected_code = 200;
 $called{GET} = 0;
 
-my $text = $tm->getChat(phone => $test_tel1);
+my $chat = $tm->getChat(phone => $test_tel1);
 cmp_ok($called{GET}, '==', 1, "getChat should have made a GET call");
 cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/chats/$test_tel1", "getSessionMessages called to the expected URI");
 is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 1, limit => 10 }, "default parameters were correctly applied");
+is_deeply($chat, { text => $test_text }, "Response JSON is as expected");
 
 $called{GET} = 0;
-$text = $tm->getChat(phone => $test_tel1, page => 3, limit => 20);
+$chat = $tm->getChat(phone => $test_tel1, page => 3, limit => 20);
 cmp_ok($called{GET}, '==', 1, "getSessionMessages should have made a called GET call");
 cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/chats/$test_tel1", "getSessionMessages called to the expected URI");
 is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 3, limit => 20 }, "explicit parameters were correctly applied");
-is_deeply($sess, $test_sess, "Response JSON is as expected");
+is_deeply($chat, { text => $test_text }, "Response JSON is as expected");
 
 # 
 # getChat invalid parameters
@@ -283,7 +283,85 @@ cmp_ok($called{GET}, '==', 1, "getChat should have made a GET call");
 like($@, qr/test error message/, "expected exception message not found");
 
 # 
-# getPrice
+# getPrice success case
 #
+$injected_code = 200;
+$injected_json = JSON::encode_json({ success => "ok" });
+$called{GET} = 0;
+
+$resp = $tm->getPrice(text => $test_text, phones => [ $test_tel1, $test_tel2 ]);
+
+cmp_ok($called{GET}, '==', 1, "Should have posted a message");
+cmp_ok((split /\s/, $captured_resource)[0], 'eq', '/messages/price', "Should post to /messages/price");
+is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { text => $test_text, phones => "$test_tel1,$test_tel2", dummy => 1, contacts => undef, sendingTime => undef, cutExtra => 0, templateId => undef, partsCount => undef, lists => undef, referenceId => undef, from => undef, rrule => undef }, "Posted data should match arguments passed");
+is_deeply($resp, { success => "ok" }, "Response JSON is as expected");
+
+#
+# Ensure that all available parameters are successfully passed through to the
+# message
+#
+for my $param (keys %send_keys) {
+    $called{GET} = 0;
+
+    my %params = %send_keys;
+    $params{text} = $test_text;
+    $params{phones} = [ $test_tel1, $test_tel2 ];
+    $params{dummy} = 1;
+    if ($param =~ /s$/) { # contacts, lists, phones
+        $params{phones} = undef;
+        $params{$param} = [ 1, 2, 3 ];
+    } 
+    elsif ($param ne "dummy") {
+        $params{$param} = "testval";
+    }
+
+    eval {
+        my $resp = $tm->getPrice(%params);
+    };
+    if ($@) {
+        fail("Unexpected exception when setting param $param: $@");
+    }
+
+    my %validate_params = %params;
+    for my $key (keys %validate_params) {
+        if (ref $validate_params{$key} eq "ARRAY") {
+            $validate_params{$key} = join(",", @{$validate_params{$key}});
+        }
+    }
+
+    cmp_ok($called{POST}, '==', 1, "Should have posted a message");
+    is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), \%validate_params, "Posted data should match arguments passed");
+}
+
+# 
+# Handling of missing parameters
+#
+eval {
+    $called{GET} = 0;
+    $tm->getPrice(phones => [ $test_tel2 ]);
+    fail("should throw when neither text nor template is included");
+};
+cmp_ok($called{GET}, '==', 0, "Should have posted a message");
+like($@, qr/Either text or templateId should be specified/, "expected error message wasn't thrown");
+
+eval {
+    $tm->getPrice(text => $test_text);
+    fail("should throw when neither phones, lists, or contacts is supplied");
+};
+cmp_ok($called{GET}, '==', 0, "Should have posted a message");
+like($@, qr/Either phones, contacts or lists should be specified/, "expected error message wasn't thrown");
+
+# 
+# Handling of server error responses
+#
+$injected_json = JSON::encode_json({ message => "test error message" });
+$injected_code = 500;
+
+eval {
+    $tm->getPrice(text => $test_text, phones => [ $test_tel1 ]);
+    fail("should throw when the server returns a non-success error code");
+};
+cmp_ok($called{GET}, '==', 1, "Should have posted a message");
+like($@, qr/test error message/, "expected error message wasn't thrown");
 
 done_testing();
