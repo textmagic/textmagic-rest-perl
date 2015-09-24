@@ -35,6 +35,8 @@ my %called = (
 my $mock = Test::MockModule->new('REST::Client');
 $mock->mock("GET", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{GET}++; });
 $mock->mock("DELETE", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{DELETE}++; });
+$mock->mock("POST", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{POST}++; });
+$mock->mock("PUT", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{PUT}++; });
 $mock->mock("buildQuery", sub { return " " . JSON::encode_json($_[1]) if $_[1] && keys %{$_[1]}; });
 $mock->mock("responseContent", sub { return $injected_json; });
 $mock->mock("responseCode", sub { return $injected_code });
@@ -142,7 +144,7 @@ my @method_metadata = (
         method => "getDedicatedNumber",
         http_method => "GET",
         target => "numbers",
-    }
+    },
 );
 for my $metadata (@method_metadata) {
     my $method = $metadata->{method};
@@ -263,11 +265,19 @@ my @lists_metadata = (
         http_method => "GET",
         target => "unsubscribers"
     },
+    {
+        method => "getListContacts",
+        http_method => "GET",
+        target => "lists/123/contacts",
+        id => 123,
+    }
 );
 for my $metadata (@lists_metadata) {
     my $method = $metadata->{method};
     my $http_method = $metadata->{http_method};
     my $target = $metadata->{target};
+    my $id = $metadata->{id};
+    my %id_param = $id ? (id => $id) : ();
 
     my $test_msgs = [{ id => 1234, text => "test reply" }, { id => 2345, text => "test text" }];
     $injected_json = JSON::encode_json($test_msgs);
@@ -284,7 +294,7 @@ for my $metadata (@lists_metadata) {
     # ordering, etc.
 
     # Default parameters
-    my $msgs = $tm->$method();
+    my $msgs = $tm->$method(%id_param);
     cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
     cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/$target", "$method() called to the expected URI");
     is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 1, limit => 10 }, "default parameters for $method were correctly applied");
@@ -292,7 +302,7 @@ for my $metadata (@lists_metadata) {
 
     # Explicit parameters
     $called{$http_method} = 0;
-    $msgs = $tm->$method(page => 2, limit => 15);
+    $msgs = $tm->$method(%id_param, page => 2, limit => 15);
     cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
     cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/$target", "$method called to the expected URI");
     is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 2, limit => 15 }, "explicit parameters were correctly applied");
@@ -304,7 +314,7 @@ for my $metadata (@lists_metadata) {
     eval {
         $called{$http_method} = 0;
         $msgs = $tm->$method(page => "foo");
-        fail("should throw when an invalid page parameter is supplied");
+        fail("$method should throw when an invalid page parameter is supplied");
     };
     cmp_ok($called{$http_method}, '==', 0, "calling $method should not make a $http_method call to the server");
     like($@, qr/should be numeric/, "expected error message was thrown when invalid page parameter is supplied to $method");
@@ -315,10 +325,23 @@ for my $metadata (@lists_metadata) {
     eval {
         $called{$http_method} = 0;
         $msgs = $tm->$method(limit => "foo");
-        fail("should throw when an invalid limit parameter is supplied");
+        fail("$method should throw when an invalid limit parameter is supplied");
     };
     cmp_ok($called{$http_method}, '==', 0, "calling $method should not make a $http_method call to the server");
     like($@, qr/should be numeric/, "expected error message was thrown when invalid limit parameter is supplied to $method");
+
+    # 
+    # invalid id
+    #
+    if ($id) {
+        eval {
+            $called{$http_method} = 0;
+            $msgs = $tm->$method();
+            fail("$method should throw when no id is supplied");
+        };
+        cmp_ok($called{$http_method}, '==', 0, "calling $method should not make a $http_method call to the server");
+        like($@, qr/should be numeric/, "expected error message was thrown when invalid limit parameter is supplied to $method");
+    }
 
     # 
     # server error response
@@ -326,9 +349,118 @@ for my $metadata (@lists_metadata) {
     $injected_code = 500;
     $injected_json = JSON::encode_json({ message => "test error message" });
     eval {
-        $tm->$method();
+        $tm->$method(%id_param);
         fail("should throw when the server returns an error code");
     };
+    like($@, qr/test error message/, "expected error message wasn't thrown");
+}
+
+my @add_metadata = (
+    {
+        method => "unsubscribeContact",
+        http_method => "POST", 
+        target => "unsubscribers",
+        min_params => { phone => "+0013215555555" }
+    },
+    {
+        method => "addCustomField",
+        http_method => "POST",
+        target => "customfields",
+        min_params => { name => "testfield" }
+    },
+    {
+        method => "updateCustomField",
+        http_method => "PUT",
+        target => "customfields/123",
+        min_params => { id => 123, name => "testfield" },
+        min_expect => { name => "testfield" },
+    },
+    {
+        method => "updateCustomFieldValue",
+        http_method => "PUT",
+        target => "customfields/123/update",
+        min_params => { id => 123, contact_id => 134, value => "foo" },
+        min_expect => { contact_id => 134, value => "foo" },
+    },
+    {
+        method => "addList",
+        http_method => "POST",
+        target => "lists",
+        min_params => { name => "testlist" },
+        min_expect => { name => "testlist", description => undef, shared => 0 },
+        max_params => { name => "testlist", description => "test description", shared => 1 },
+    },
+    {
+        method => "addContactsToList",
+        http_method => "PUT",
+        target => "lists/123/contacts",
+        min_params => { id => 123, contacts => [ 1, 5 ] },
+        min_expect => { contacts => "1,5" },
+    },
+);
+for my $metadata (@add_metadata) {
+    my $method = $metadata->{method};
+    my $http_method = $metadata->{http_method};
+    my $target = $metadata->{target};
+    my $min_params = $metadata->{min_params};
+    my $min_expect = $metadata->{min_expect} || $min_params;
+    my $max_params = $metadata->{max_params};
+    my $max_expect = $metadata->{max_expect} || $max_params;
+
+    if ($http_method eq "POST" || $http_method eq "PUT") {
+        $injected_code = 201;
+    }
+    elsif ($http_method eq "GET") {
+        $injected_code = 200;
+    }
+    $injected_json = JSON::encode_json({ success => "ok" });
+    $called{$http_method} = 0;
+
+    # 
+    # success case
+    #
+    my $resp = $tm->$method(%$min_params);
+    cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
+    cmp_ok($captured_resource, 'eq', "/$target", "$method called to the expected uri /$target");
+    is_deeply(JSON::decode_json($captured_data), $min_expect, "parameters to $method encoded in $http_method to server");
+    is_deeply($resp, { success => "ok" }, "$method response JSON was returned to the caller");
+
+    if ($max_params) {
+        $called{$http_method} = 0;
+
+        $resp = $tm->$method(%$max_params);
+        cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
+        cmp_ok($captured_resource, 'eq', "/$target", "$method called to the expected uri /$target");
+        is_deeply(JSON::decode_json($captured_data), $max_expect, "parameters to $method encoded in $http_method to server");
+        is_deeply($resp, { success => "ok" }, "response JSON was returned to the caller");
+    }
+
+    # 
+    # invalid parameters
+    #
+    for my $required (keys %$min_params) {
+        my %params = %$min_params;
+        delete $params{$required};
+
+        eval {
+            $called{$http_method} = 0;
+            $tm->$method(%params);
+            fail("should throw an exception calling $method without $required parameter");
+        };
+        cmp_ok($called{$http_method}, '==', 0, "calling $method without $required parameter should not $http_method to the server");
+    }
+
+    # 
+    # server error response
+    #
+    $injected_code = 500;
+    $injected_json = JSON::encode_json({ message => "test error message" });
+    eval {
+        $called{$http_method} = 0;
+        $tm->$method(%$min_params);
+        fail("$method should throw when the server returns an error code");
+    };
+    cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
     like($@, qr/test error message/, "expected error message wasn't thrown");
 }
 
