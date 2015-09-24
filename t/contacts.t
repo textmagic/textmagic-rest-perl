@@ -291,7 +291,7 @@ like($@, qr/should be numeric/, "expected error message was thrown when invalid 
 $injected_code = 500;
 $injected_json = JSON::encode_json({ message => "test error message" });
 eval {
-    $tm->getContactLists();
+    $tm->getContactLists(id => $contact_id);
     fail("should throw when the server returns an error code");
 };
 like($@, qr/test error message/, "expected error message wasn't thrown");
