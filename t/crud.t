@@ -25,7 +25,9 @@ my $captured_resource = "";
 my $captured_data = "";
 my %called = (
     GET => 0,
-    DELETE => 0
+    DELETE => 0,
+    POST => 0,
+    PUT => 0,
 );
 
 #
@@ -33,10 +35,19 @@ my %called = (
 # causes our mock definitions to be loaded by TextmagicRest
 #
 my $mock = Test::MockModule->new('REST::Client');
-$mock->mock("GET", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{GET}++; });
-$mock->mock("DELETE", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{DELETE}++; });
+$mock->mock("GET", sub { 
+        $captured_self = shift;
+        ($captured_resource, $captured_data) = split /\s/, $_[0];
+        $called{GET}++; 
+    });
+$mock->mock("DELETE", sub { 
+        $captured_self = shift;
+        ($captured_resource, $captured_data) = split /\s/, $_[0];
+        $called{DELETE}++; 
+    });
 $mock->mock("POST", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{POST}++; });
 $mock->mock("PUT", sub { ($captured_self, $captured_resource, $captured_data) = @_; $called{PUT}++; });
+
 $mock->mock("buildQuery", sub { return " " . JSON::encode_json($_[1]) if $_[1] && keys %{$_[1]}; });
 $mock->mock("responseContent", sub { return $injected_json; });
 $mock->mock("responseCode", sub { return $injected_code });
@@ -143,6 +154,11 @@ my @method_metadata = (
     {
         method => "getDedicatedNumber",
         http_method => "GET",
+        target => "numbers",
+    },
+    {
+        method => "cancelDedicatedNumber",
+        http_method => "DELETE",
         target => "numbers",
     },
 );
@@ -270,7 +286,12 @@ my @lists_metadata = (
         http_method => "GET",
         target => "lists/123/contacts",
         id => 123,
-    }
+    },
+    {
+        method => "getDedicatedNumbers",
+        http_method => "GET",
+        target => "numbers",
+    },
 );
 for my $metadata (@lists_metadata) {
     my $method = $metadata->{method};
@@ -296,16 +317,16 @@ for my $metadata (@lists_metadata) {
     # Default parameters
     my $msgs = $tm->$method(%id_param);
     cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
-    cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/$target", "$method() called to the expected URI");
-    is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 1, limit => 10 }, "default parameters for $method were correctly applied");
+    cmp_ok($captured_resource, 'eq', "/$target", "$method() called to the expected URI");
+    is_deeply(JSON::decode_json($captured_data), { page => 1, limit => 10 }, "default parameters for $method were correctly applied");
     is_deeply($msgs, $test_msgs, "the response was successfully decoded from JSON");
 
     # Explicit parameters
     $called{$http_method} = 0;
     $msgs = $tm->$method(%id_param, page => 2, limit => 15);
     cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
-    cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/$target", "$method called to the expected URI");
-    is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 2, limit => 15 }, "explicit parameters were correctly applied");
+    cmp_ok($captured_resource, 'eq', "/$target", "$method called to the expected URI");
+    is_deeply(JSON::decode_json($captured_data), { page => 2, limit => 15 }, "explicit parameters for $method were correctly applied");
     is_deeply($msgs, $test_msgs, "the response was successfully decoded from JSON");
 
     # 
@@ -397,6 +418,19 @@ my @add_metadata = (
         min_params => { id => 123, contacts => [ 1, 5 ] },
         min_expect => { contacts => "1,5" },
     },
+    {
+        method => "deleteContactsFromList",
+        http_method => "DELETE",
+        target => "lists/123/contacts",
+        min_params => { id => 123, contacts => [ 1, 6 ] },
+        min_expect => { contacts => "1,6" },
+    },
+    {
+        method => "buyDedicatedNumber",
+        http_method => "POST",
+        target => "numbers",
+        min_params => { phone => "0013215555555", country => "US", userId => "4321" },
+    },
 );
 for my $metadata (@add_metadata) {
     my $method = $metadata->{method};
@@ -407,12 +441,7 @@ for my $metadata (@add_metadata) {
     my $max_params = $metadata->{max_params};
     my $max_expect = $metadata->{max_expect} || $max_params;
 
-    if ($http_method eq "POST" || $http_method eq "PUT") {
-        $injected_code = 201;
-    }
-    elsif ($http_method eq "GET") {
-        $injected_code = 200;
-    }
+    $injected_code = 201;
     $injected_json = JSON::encode_json({ success => "ok" });
     $called{$http_method} = 0;
 
@@ -423,7 +452,12 @@ for my $metadata (@add_metadata) {
     cmp_ok($called{$http_method}, '==', 1, "calling $method should make a $http_method call to the server");
     cmp_ok($captured_resource, 'eq', "/$target", "$method called to the expected uri /$target");
     is_deeply(JSON::decode_json($captured_data), $min_expect, "parameters to $method encoded in $http_method to server");
-    is_deeply($resp, { success => "ok" }, "$method response JSON was returned to the caller");
+    if ($http_method eq "DELETE") {
+        cmp_ok($resp, '==', 1, "$method response was a success");
+    }
+    else {
+        is_deeply($resp, { success => "ok" }, "$method response JSON was returned to the caller");
+    }
 
     if ($max_params) {
         $called{$http_method} = 0;
