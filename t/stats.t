@@ -8,8 +8,8 @@ use Test::MockModule;
 use Test::More;
 
 # 
-# This file contains tests addTemplate and updateTemple. The methods
-# getTemplate, getTemplates, and deleteTemplate are all tested in crud.t
+# This file contains tests for getMessagingStats, getSpendingStats, and
+# getInvoices.
 #
 
 my $username = 'jessebangs';

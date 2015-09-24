@@ -109,6 +109,11 @@ my @method_metadata = (
         target => "contacts",
     },
     {
+        method => "getUnsubscribedContact",
+        http_method => "GET",
+        target => "unsubscribers",
+    },
+    {
         method => "deleteContact",
         http_method => "DELETE",
         target => "contacts",
@@ -252,6 +257,11 @@ my @lists_metadata = (
         method => "getLists",
         http_method => "GET",
         target => "lists"
+    },
+    {
+        method => "getUnsubscribedContacts",
+        http_method => "GET",
+        target => "unsubscribers"
     },
 );
 for my $metadata (@lists_metadata) {
