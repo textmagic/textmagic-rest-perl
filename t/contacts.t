@@ -318,7 +318,7 @@ eval {
     fail("unsubscribeContact should throw when no phone is supplied");
 };
 cmp_ok($called{POST}, '==', 0, "no call should be made to the server when required parameter is missing");
-like($@, qr/Contact phone number should be specified/, "expected error message wasn't thrown from unsubscribeContact");
+like($@, qr/Specify a valid phone number/, "expected error message wasn't thrown from unsubscribeContact");
 
 eval {
     $called{POST} = 0;
@@ -326,7 +326,7 @@ eval {
     fail("unsubscribeContact should throw when a non-numeric phone is supplied");
 };
 cmp_ok($called{POST}, '==', 0, "no call should be made to the server when required parameter is non-numeric");
-like($@, qr/should be numeric/, "expected error message wasn't thrown from unsubscribeContact");
+like($@, qr/Specify a valid phone number/, "expected error message wasn't thrown from unsubscribeContact");
 
 # 
 # unsubscribeContact server error response
