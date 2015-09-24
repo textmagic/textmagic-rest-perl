@@ -296,4 +296,49 @@ eval {
 };
 like($@, qr/test error message/, "expected error message wasn't thrown");
 
+# 
+# unsubscribeContact success case
+#
+$injected_code = 201;
+$injected_json = JSON::encode_json({ success => "ok" });
+$called{POST} = 0;
+
+my $resp = $tm->unsubscribeContact(phone => $test_tel);
+cmp_ok($called{POST}, '==', 1, "calling unsubscribeContact should make a POST call to the server");
+cmp_ok($captured_resource, 'eq', "/unsubscribers", "unsubscribeContact called to the expected uri /unsubscribers/{id}");
+is_deeply(JSON::decode_json($captured_data), { phone => $test_tel }, "phone passed as parameter POSTed to server");
+is_deeply($resp, { success => "ok" }, "response JSON was returned to the caller");
+
+# 
+# unsubscribeContact invalid/missing parameter tests
+#
+eval {
+    $called{POST} = 0;
+    $resp = $tm->unsubscribeContact();
+    fail("unsubscribeContact should throw when no phone is supplied");
+};
+cmp_ok($called{POST}, '==', 0, "no call should be made to the server when required parameter is missing");
+like($@, qr/Contact phone number should be specified/, "expected error message wasn't thrown from unsubscribeContact");
+
+eval {
+    $called{POST} = 0;
+    $resp = $tm->unsubscribeContact(phone => "foo");
+    fail("unsubscribeContact should throw when a non-numeric phone is supplied");
+};
+cmp_ok($called{POST}, '==', 0, "no call should be made to the server when required parameter is non-numeric");
+like($@, qr/should be numeric/, "expected error message wasn't thrown from unsubscribeContact");
+
+# 
+# unsubscribeContact server error response
+#
+$injected_code = 500;
+$injected_json = JSON::encode_json({ message => "test error message" });
+eval {
+    $called{POST} = 0;
+    $tm->unsubscribeContact(phone => $test_tel);
+    fail("unsubscribeContact should throw when the server returns an error code");
+};
+cmp_ok($called{POST}, '==', 1, "calling unsubscribeContact should make a POST call to the server");
+like($@, qr/test error message/, "expected error message wasn't thrown");
+
 done_testing();
