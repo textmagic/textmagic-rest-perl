@@ -1392,7 +1392,7 @@ sub getMessagingStats {
     my %args = (
         by      => 'off',
         start   => undef,
-        end     => undef
+        end     => undef,
         @_
     );    
     
@@ -1442,7 +1442,7 @@ sub getSpendingStats {
     my %args = (
         %paginatorArgs,
         start   => undef,
-        end     => undef
+        end     => undef,
         @_
     );    
     
