@@ -1934,7 +1934,9 @@ sub unsubscribeContact {
         @_
     );
     
-    $self->error('Contact phone number should be specified') if (!$args{phone});    
+    if (!$args{phone} || $args{phone} !~ /^\+?\d+$/) {
+        $self->error('Specify a valid phone number');
+    }
     
     my %requestArgs = convertArgs(\%args);
     
