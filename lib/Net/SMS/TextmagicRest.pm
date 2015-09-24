@@ -1331,6 +1331,10 @@ sub updateTemplate {
     
     $self->error('Template id, text and body should be specified') if (!$args{id} || !$args{name} || !$args{body});
     
+    if (!$args{id} || $args{id} !~ /^\d+$/) {
+        $self->error("Template ID should be numeric");
+    }
+    
     my %requestArgs;
     
     while ((my $key, my $value) = each(%args)){
@@ -1341,7 +1345,7 @@ sub updateTemplate {
         my $newKey = 'template[' . lcfirst(decamelize($key)) . ']';
         $requestArgs{$newKey} = $value;
     }    
-    
+
     $self->request('PUT', '/templates/' . $args{id}, \%requestArgs);    
     
     my $response = from_json($self->getClient()->responseContent());
