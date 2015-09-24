@@ -154,7 +154,7 @@ $called{GET} = 0;
 my $sess = $tm->getSessionMessages(id => 1234);
 cmp_ok($called{GET}, '==', 1, "getSessionMessages should have made a called GET call");
 cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/sessions/1234/messages", "getSessionMessages called to the expected URI");
-is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 1, limit => 10 }, "explicit parameters were correctly applied");
+is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 1, limit => 10 }, "default parameters were correctly applied");
 is_deeply($sess, $test_sess, "Response JSON is as expected");
 
 $called{GET} = 0;
@@ -186,7 +186,7 @@ like($@, qr/should be numeric/, "expected exception message not found");
 eval {
     $called{GET} = 0;
     $sess = $tm->getSessionMessages(id => 2345, page => "three");
-    fail("should have thrown an exception calling getSessionMessages with non-numeric id");
+    fail("should have thrown an exception calling getSessionMessages with non-numeric page");
 };
 cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
 like($@, qr/should be numeric/, "expected exception message not found");
@@ -194,7 +194,7 @@ like($@, qr/should be numeric/, "expected exception message not found");
 eval {
     $called{GET} = 0;
     $sess = $tm->getSessionMessages(id => 2345, limit => "three");
-    fail("should have thrown an exception calling getSessionMessages with non-numeric id");
+    fail("should have thrown an exception calling getSessionMessages with non-numeric limit");
 };
 cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
 like($@, qr/should be numeric/, "expected exception message not found");
@@ -212,5 +212,78 @@ eval {
 };
 cmp_ok($called{GET}, '==', 1, "getSsessionMessages should have made a GET call");
 like($@, qr/test error message/, "expected error message was not thrown");
+
+# 
+# getChat success case
+#
+$test_text = { text => "test text" };
+$injected_json = JSON::encode_json($test_text);
+$injected_code = 200;
+$called{GET} = 0;
+
+my $text = $tm->getChat(phone => $test_tel1);
+cmp_ok($called{GET}, '==', 1, "getChat should have made a GET call");
+cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/chats/$test_tel1", "getSessionMessages called to the expected URI");
+is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 1, limit => 10 }, "default parameters were correctly applied");
+
+$called{GET} = 0;
+$text = $tm->getChat(phone => $test_tel1, page => 3, limit => 20);
+cmp_ok($called{GET}, '==', 1, "getSessionMessages should have made a called GET call");
+cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/chats/$test_tel1", "getSessionMessages called to the expected URI");
+is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 3, limit => 20 }, "explicit parameters were correctly applied");
+is_deeply($sess, $test_sess, "Response JSON is as expected");
+
+# 
+# getChat invalid parameters
+#
+eval {
+    $called{GET} = 0;
+    $tm->getChat();
+    fail("should have thrown an exception calling getSessionMessages with missing phone number");
+};
+cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
+like($@, qr/Specify a valid phone number/, "expected exception message not found");
+
+eval {
+    $called{GET} = 0;
+    $tm->getChat(phone => "foo");
+    fail("should have thrown an exception calling getChat with involid phone");
+};
+cmp_ok($called{GET}, '==', 0, "getChat should not have made a GET call");
+like($@, qr/Specify a valid phone number/, "expected exception message not found");
+
+eval {
+    $called{GET} = 0;
+    $tm->getChat(phone => $test_tel1, page => "three");
+    fail("should have thrown an exception calling getChat with non-numeric page");
+};
+cmp_ok($called{GET}, '==', 0, "getChat should not have made a GET call");
+like($@, qr/should be numeric/, "expected exception message not found");
+
+eval {
+    $called{GET} = 0;
+    $tm->getChat(phone => $test_tel1, limit => "three");
+    fail("should have thrown an exception calling getChat with non-numeric limit");
+};
+cmp_ok($called{GET}, '==', 0, "getChat should not have made a GET call");
+like($@, qr/should be numeric/, "expected exception message not found");
+
+# 
+# getChat server error response
+#
+$injected_json = JSON::encode_json({ message => "test error message" });
+$injected_code = 500;
+
+eval {
+    $called{GET} = 0;
+    $tm->getChat(phone => $test_tel1);
+    fail("should have thrown an exception when server returns an error");
+};
+cmp_ok($called{GET}, '==', 1, "getChat should have made a GET call");
+like($@, qr/test error message/, "expected exception message not found");
+
+# 
+# getPrice
+#
 
 done_testing();
