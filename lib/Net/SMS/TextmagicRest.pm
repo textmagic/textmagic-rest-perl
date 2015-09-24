@@ -965,7 +965,7 @@ sub getChat {
         @_
     );
     
-    if (!$args{phone} || $args{phone} !~ /^\d+$/) {
+    if (!$args{phone} || $args{phone} !~ /^\+?\d+$/) {
         $self->error('Specify a valid phone number');
     }
     if ($args{page} !~ /^\d+$/) {
@@ -974,8 +974,10 @@ sub getChat {
     if ($args{limit} !~ /^\d+$/) {
         $self->error("limit should be numeric");
     }
+
+    my $phone = delete $args{phone};
     
-    $self->request('GET', '/chats/' . $args{phone}, \%args);
+    $self->request('GET', '/chats/' . $phone, \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
@@ -986,7 +988,7 @@ sub getChat {
     }
 }
 
-=head3 getChat
+=head3 getPrice
 
 Check pricing for a new outbound message. See "send" command reference for available arguments list.
 
