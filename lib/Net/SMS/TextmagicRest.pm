@@ -497,7 +497,14 @@ sub getMessages {
     my %args = (
         %paginatorArgs,
         @_
-    );    
+    );
+
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/messages', \%args);
     
@@ -570,6 +577,13 @@ sub getReplies {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/replies', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -641,6 +655,13 @@ sub getSessions {
         @_
     );
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/sessions', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -688,8 +709,16 @@ sub getSessionMessages {
     if (!$args{id} || $args{id} !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+
+    my $id = delete $args{id};
     
-    $self->request('GET', '/sessions/' . $args{id} . '/messages');
+    $self->request('GET', '/sessions/' . $id . '/messages', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
@@ -759,6 +788,13 @@ sub getSchedules {
         %paginatorArgs,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/schedules', \%args);
     
@@ -831,6 +867,13 @@ sub getBulks {
         @_
     );
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/bulks', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -870,6 +913,13 @@ sub getChats {
         %paginatorArgs,
         @_
     );
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/chats', \%args);
     
@@ -917,6 +967,12 @@ sub getChat {
     
     if (!$args{phone} || $args{phone} !~ /^\d+$/) {
         $self->error('Specify a valid phone number');
+    }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
     }
     
     $self->request('GET', '/chats/' . $args{phone}, \%args);
@@ -1148,6 +1204,13 @@ sub getTemplates {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/templates', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1377,6 +1440,13 @@ sub getSpendingStats {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/stats/spending', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1416,6 +1486,13 @@ sub getInvoices {
         %paginatorArgs,
         @_
     );
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/invoices', \%args);
     
@@ -1496,6 +1573,13 @@ sub getContacts {
         shared  => FALSE,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/contacts', \%args);
     
@@ -1704,6 +1788,13 @@ sub getContactLists {
     if ($args{id} !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     
     $self->request('GET', '/contacts/' . $args{id} . '/lists', \%args);
     
@@ -1775,6 +1866,13 @@ sub getUnsubscribedContacts {
         %paginatorArgs,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/unsubscribers', \%args);
     
@@ -1888,6 +1986,13 @@ sub getCustomFields {
         %paginatorArgs,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/customfields', \%args);
     
@@ -2119,6 +2224,13 @@ sub getLists {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/lists', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -2286,6 +2398,13 @@ sub getListContacts {
     if ($args{id} !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     
     $self->request('GET', '/lists/' . $args{id} . '/contacts', \%args);
     
@@ -2451,6 +2570,13 @@ sub getDedicatedNumbers {
         shared  => FALSE,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/numbers', \%args);
     

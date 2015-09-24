@@ -164,4 +164,53 @@ cmp_ok((split /\s/, $captured_resource)[0], 'eq', "/sessions/2345/messages", "ge
 is_deeply(JSON::decode_json((split /\s/, $captured_resource)[1]), { page => 3, limit => 20 }, "explicit parameters were correctly applied");
 is_deeply($sess, $test_sess, "Response JSON is as expected");
 
+# 
+# getSessionMessages invalid arguments
+#
+eval {
+    $called{GET} = 0;
+    $sess = $tm->getSessionMessages();
+    fail("should have thrown an exception calling getSessionMessages with missing id");
+};
+cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
+like($@, qr/should be numeric/, "expected exception message not found");
+
+eval {
+    $called{GET} = 0;
+    $sess = $tm->getSessionMessages(id => "foo");
+    fail("should have thrown an exception calling getSessionMessages with non-numeric id");
+};
+cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
+like($@, qr/should be numeric/, "expected exception message not found");
+
+eval {
+    $called{GET} = 0;
+    $sess = $tm->getSessionMessages(id => 2345, page => "three");
+    fail("should have thrown an exception calling getSessionMessages with non-numeric id");
+};
+cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
+like($@, qr/should be numeric/, "expected exception message not found");
+
+eval {
+    $called{GET} = 0;
+    $sess = $tm->getSessionMessages(id => 2345, limit => "three");
+    fail("should have thrown an exception calling getSessionMessages with non-numeric id");
+};
+cmp_ok($called{GET}, '==', 0, "getSessionMessages should not have made a GET call");
+like($@, qr/should be numeric/, "expected exception message not found");
+
+# 
+# getSessionMessages server error response
+#
+$injected_json = JSON::encode_json({ message => "test error message" });
+$injected_code = 500;
+
+eval { 
+    $called{GET} = 0;
+    $sess = $tm->getSessionMessages(id => 1234);
+    fail("should have thrown an exception calling getSessionMessages when server returns error");
+};
+cmp_ok($called{GET}, '==', 1, "getSsessionMessages should have made a GET call");
+like($@, qr/test error message/, "expected error message was not thrown");
+
 done_testing();
