@@ -2106,6 +2106,10 @@ Update existing custom field.
 
 =over 4
 
+=item id
+
+Custom field id.
+
 =item name
 
 Custom field name.
@@ -2364,7 +2368,7 @@ List contacts.
 
 =cut
 
-sub updateList {
+sub addContactsToList {
     my $self = shift || undef;
     if (!defined $self) {
         return undef;
@@ -2372,7 +2376,6 @@ sub updateList {
     
     my %args = (
         id  => undef,
-        %listsArgs,
         @_
     );
     
@@ -2421,7 +2424,9 @@ sub getListContacts {
         @_
     );
     
-    if ($args{id} !~ /^\d+$/) {
+    my $id = delete $args{id};
+    
+    if (!$id || $id !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
     if ($args{page} !~ /^\d+$/) {
@@ -2431,57 +2436,11 @@ sub getListContacts {
         $self->error("limit should be numeric");
     }
     
-    
-    $self->request('GET', '/lists/' . $args{id} . '/contacts', \%args);
+    $self->request('GET', '/lists/' . $id . '/contacts', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
     if ($self->getClient()->responseCode() ne '200') {
-        $self->error($response->{message});
-    } else {    
-        return $response;
-    }
-}
-
-=head3 updateContactsInList
-
-Assign contacts to the specified list.
-
-=over 4
-
-=item id
-
-List id.
-
-=item contacts
-
-List contacts.
-
-=back
-
-=cut
-
-sub updateContactInList {
-    my $self = shift || undef;
-    if (!defined $self) {
-        return undef;
-    }
-    
-    my %args = (
-        id  => undef,
-        %listsArgs,
-        @_
-    );
-    
-    $self->error('List ID and least one contact should be specified') if (!$args{id} || !$args{contacts});
-    
-    my %requestArgs = convertArgs(\%args);    
-    
-    $self->request('PUT', '/lists/' . $args{id} . '/contacts', \%requestArgs);    
-    
-    my $response = from_json($self->getClient()->responseContent());
-    
-    if ($self->getClient()->responseCode() ne '201') {
         $self->error($response->{message});
     } else {    
         return $response;
@@ -2514,7 +2473,6 @@ sub deleteContactsFromList {
     
    my %args = (
         id  => undef,
-        %listsArgs,
         @_
     );
     
@@ -2567,7 +2525,7 @@ sub getDedicatedNumber {
     }
 }
 
-=head3 getContacts
+=head3 getDedicatedNumbers
 
 Get all bought dedicated numbers. Optional arguments:
 
@@ -2593,7 +2551,6 @@ sub getDedicatedNumbers {
     
     my %args = (
         %paginatorArgs,
-        shared  => FALSE,
         @_
     );    
     
@@ -2615,7 +2572,7 @@ sub getDedicatedNumbers {
     }
 }
 
-=head3 getContacts
+=head3 searchDedicatedNumbers
 
 Find available dedicated numbers to buy. Arguments:
 
@@ -2656,7 +2613,7 @@ sub searchDedicatedNumbers {
     }
 }
 
-=head3 addContact
+=head3 buyDedicatedNumber
 
 Buy a dedicated number and assign it to the specified account.
 
@@ -2704,15 +2661,15 @@ sub buyDedicatedNumber {
     }
 }
 
-=head3 cacnelDedicatedNumber
+=head3 cancelDedicatedNumber
 
 Cancel dedicated number subscription. Receives "id" of dedicated number as a parameter. Example:
 
-  $tm->deleteDedicatedNumber(334223);
+  $tm->cancelDedicatedNumber(334223);
 
 =cut
 
-sub cacnelDedicatedNumber {
+sub cancelDedicatedNumber {
     my $self = shift || undef;
     if (!defined $self) {
         return undef;
