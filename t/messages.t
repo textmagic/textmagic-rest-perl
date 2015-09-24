@@ -21,7 +21,6 @@ my $injected_code = 200;
 my $captured_self = undef;
 my $captured_resource = "";
 my $captured_data = "";
-my $last_method = "";
 my %called = (
     GET => 0,
     POST => 0,
