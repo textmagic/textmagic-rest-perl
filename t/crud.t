@@ -431,6 +431,21 @@ my @add_metadata = (
         target => "numbers",
         min_params => { phone => "0013215555555", country => "US", userId => "4321" },
     },
+    {
+        method => "auth",
+        http_method => "POST",
+        min_params => { username => "testuser", password => "passwd" },
+        target => "tokens",
+        code => 200
+    },
+    {
+        method => "searchDedicatedNumbers",
+        http_method => "GET",
+        code => 200,
+        target => "numbers/available",
+        min_params => { country => "US" },
+        max_params => { country => "US", prefix => 555 },
+    }
 );
 for my $metadata (@add_metadata) {
     my $method = $metadata->{method};
@@ -441,7 +456,7 @@ for my $metadata (@add_metadata) {
     my $max_params = $metadata->{max_params};
     my $max_expect = $metadata->{max_expect} || $max_params;
 
-    $injected_code = 201;
+    $injected_code = $metadata->{code} || 201;
     $injected_json = JSON::encode_json({ success => "ok" });
     $called{$http_method} = 0;
 

@@ -95,7 +95,7 @@ like($@, qr/firstName and lastName should be specified/, "expected error message
 
 eval {
     $result = $tm->setUserInfo(lastName => "McTesterson", foo => "val");
-    fail("setUserInfo without last name should fail");
+    fail("setUserInfo without first name should fail");
 };
 like($@, qr/firstName and lastName should be specified/, "expected error message was not found");
 
