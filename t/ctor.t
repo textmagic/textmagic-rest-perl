@@ -29,8 +29,8 @@ BEGIN { use_ok( 'Net::SMS::TextmagicRest' ); }
 
 require_ok( 'Net::SMS::TextmagicRest' );
 
-my $username = 'jessebangs';
-my $token = 'S4y9ph4H5r4lcSG6ZFdffKUgWnpkAl';
+my $username = 'testuser';
+my $token = 'testtoken';
 my $baseUrl = 'http://example.com';
 
 my $tm = Net::SMS::TextmagicRest->new(username => $username, token => $token, baseUrl => $baseUrl);

@@ -9,13 +9,10 @@ use Test::More;
 
 # 
 # This file contains tests for all of the basic getSomething, deleteSomething,
-# and getSomethings methods. These all have the same argument structure and
-# identical validations, so they're abstracted out into a convenient array that
-# lets us cover all of them at once.
+# and getSomethings methods, as well as some other miscellaneous methods. These
+# all have the same argument structure and identical validations, so they're
+# abstracted out into a convenient array that lets us cover all of them at once.
 #
-
-my $username = 'jessebangs';
-my $token = 'S4y9ph4H5r4lcSG6ZFdffKUgWnpkAl';
 
 # Variables capturing data passed into or out of the REST client.
 my $injected_json = "{}";
@@ -52,7 +49,7 @@ $mock->mock("buildQuery", sub { return " " . JSON::encode_json($_[1]) if $_[1] &
 $mock->mock("responseContent", sub { return $injected_json; });
 $mock->mock("responseCode", sub { return $injected_code });
 
-my $tm = Net::SMS::TextmagicRest->new(username => $username, token => $token);
+my $tm = Net::SMS::TextmagicRest->new(username => "testuser", token => "testtoken");
 
 # 
 # So we have a bunch of methods with the exact same argument (a single integer

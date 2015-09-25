@@ -12,9 +12,6 @@ use Test::More;
 # getContact, getContacts, and deleteContact are tested in crud.t.
 #
 
-my $username = 'jessebangs';
-my $token = 'S4y9ph4H5r4lcSG6ZFdffKUgWnpkAl';
-
 # Variables capturing data passed into or out of the REST client.
 my $injected_json = "{}";
 my $injected_code = 200;
@@ -49,7 +46,7 @@ $mock->mock("buildQuery", sub { return " " . JSON::encode_json($_[1]) if $_[1] &
 $mock->mock("responseContent", sub { return $injected_json; });
 $mock->mock("responseCode", sub { return $injected_code });
 
-my $tm = Net::SMS::TextmagicRest->new(username => $username, token => $token);
+my $tm = Net::SMS::TextmagicRest->new(username => "testuser", token => "testtoken");
 
 # 
 # addContact success tests
