@@ -2175,7 +2175,7 @@ sub updateCustomFieldValue {
         @_
     );
     
-    $self->error('Custom field ID, value and contact ID hould be specified') if (!$args{id} || !$args{contact_id} || !$args{value});
+    $self->error('Custom field ID, value and contact ID hould be specified') if (!$args{id} || !$args{contactId} || !$args{value});
     
     my %requestArgs = convertArgs(\%args);
     
@@ -2196,9 +2196,9 @@ sub updateCustomFieldValue {
 
 =head3 getList
 
-Get a single list. Receives "id" of template as a parameter. Example:
+Get a single list. Receives "id" of the list as a parameter. Example:
 
-  $template = $tm->getList(31322);
+  $list = $tm->getList(31322);
 
 =cut
 

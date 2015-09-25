@@ -400,8 +400,8 @@ my @add_metadata = (
         method => "updateCustomFieldValue",
         http_method => "PUT",
         target => "customfields/123/update",
-        min_params => { id => 123, contact_id => 134, value => "foo" },
-        min_expect => { contact_id => 134, value => "foo" },
+        min_params => { id => 123, contactId => 134, value => "foo" },
+        min_expect => { contactId => 134, value => "foo" },
     },
     {
         method => "addList",
@@ -429,7 +429,7 @@ my @add_metadata = (
         method => "buyDedicatedNumber",
         http_method => "POST",
         target => "numbers",
-        min_params => { phone => "0013215555555", country => "US", userId => "4321" },
+        min_params => { phone => "+013215555555", country => "US", userId => "4321" },
     },
     {
         method => "auth",
