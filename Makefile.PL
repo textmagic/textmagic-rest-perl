@@ -11,5 +11,6 @@ use ExtUtils::MakeMaker;
             "String::CamelCase" => 0,
             "Time::HiRes" => 0,
             "Data::Dumper" => 0,
+            "Test::MockModule" => 0,
         }
     );

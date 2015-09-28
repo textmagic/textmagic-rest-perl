@@ -15,7 +15,8 @@ use warnings;
 use diagnostics;
 
 use feature 'switch';
-no warnings 'experimental::smartmatch';
+#no warnings 'experimental::smartmatch';
+no if ($] >= 5.018), 'warnings' => 'experimental';
 
 use constant TRUE => 1;
 use constant FALSE => 0;
