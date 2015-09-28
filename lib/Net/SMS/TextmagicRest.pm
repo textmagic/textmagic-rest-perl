@@ -15,6 +15,7 @@ use warnings;
 use diagnostics;
 
 use feature 'switch';
+no warnings 'experimental::smartmatch';
 
 use constant TRUE => 1;
 use constant FALSE => 0;
@@ -96,7 +97,7 @@ Net::SMS::TextmagicRest provides a simple way to interact with TextMagic REST AP
 
 Construct a new REST::Client. Takes an optional hash or hash reference or
 config flags. Each config flag also has get/set accessors of the form
-getHost/setHost, getUseragent/setUseragent, etc.  These can be called on the
+getHost/setHost, getUserAgent/setUserAgent, etc.  These can be called on the
 instantiated object to change or check values.
 
 Usage:
@@ -146,6 +147,7 @@ sub new {
     $self->setUsername($args{username});
     $self->setToken($args{token});
     $self->setBaseUrl($args{baseUrl});
+    $self->setUserAgent($args{userAgent});
     $self->_buildClient();
     
     $self->{previousRequestTime} = 0;
@@ -171,11 +173,11 @@ Internal TextMagic user ID.
 
 TextMagic username.
 
-=item first_name
+=item firstName
 
 First name.
 
-=item last_name
+=item lastName
 
 Last name.
 
@@ -185,13 +187,33 @@ Current account balance in account currency points.
 
 =item currency
 
-Compound array contains "id" (3-letter ISO currency code: http://en.wikipedia.org/wiki/ISO_4217)
-and "html_symbol" which can be directly prepended to the "balance" amount.
+A hash reference with the following keys:
+
+=over
+
+=item * C<id> - The 3-letter ISO currency code: http://en.wikipedia.org/wiki/ISO_4217
+
+=item * C<htmlSymbol> - The html entity which which can be directly prepended to the "balance" amount.
+
+=back
 
 =item timezone
 
-Compound array contains "timezone" (account ISO timezone name), "area", "dst" (1 when DST is on, otherwise 0)
-and "offset" (from UTC in minutes).
+A hash reference with the following keys:
+
+=over
+
+=item * C<area> - The account's ISO timezone area (usually one of America, Europe, Asia, or Africa)
+
+=item * C<dst> - When Daylight Savings Time is on in the user's timezone, this is 1, otherwise 0.
+
+=item * C<id> - The ISO timezone ID.
+
+=item * C<offset> - The timezone offset from UTC in minutes.
+
+=item * C<timezone> - The ISO timezone name (something like "America/Chicago").
+
+=back
 
 =back
 
@@ -216,19 +238,12 @@ sub getUserInfo {
 
 =head3 setUserInfo
 
-Update existing template.
+Updates existing user info based on the arguments passed in. The arguments are a
+hash (not a hash reference) with keys matching the keys returned from
+C<getUserInfo>. See the documentation of that method for details. The keys
+C<firstName> and C<lastName> are required.
 
-=over 4
-
-=item firstName
-
-User first name.
-
-=item lastName
-
-User last name.
-
-=back
+    $tm->setUserInfo(firstName => "First", lastName => "Last", currency => { id => "USD" });
 
 =cut
 
@@ -409,7 +424,7 @@ sub send {
     );    
     
     $self->error('Either text or templateId should be specified') if (!$args{text} && !$args{templateId});
-    $self->error('Either phones, contacts or lists should be specified') if (!$args{phones} && !$args{contacts} && !$args{templates});
+    $self->error('Either phones, contacts or lists should be specified') if (!($args{phones} || $args{contacts} || $args{lists}));
     
     my %requestArgs = convertArgs(\%args);
     
@@ -440,7 +455,7 @@ sub getMessage {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Message ID should be numeric');
     }
     
@@ -482,7 +497,14 @@ sub getMessages {
     my %args = (
         %paginatorArgs,
         @_
-    );    
+    );
+
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/messages', \%args);
     
@@ -511,7 +533,7 @@ sub getReply {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Reply ID should be numeric');
     }
     
@@ -555,6 +577,13 @@ sub getReplies {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/replies', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -582,7 +611,7 @@ sub getSession {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
     
@@ -625,6 +654,13 @@ sub getSessions {
         %paginatorArgs,
         @_
     );
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/sessions', \%args);
     
@@ -670,11 +706,19 @@ sub getSessionMessages {
         @_
     );    
     
-    if (!$args{id} || $args{id} =~ /\D/) {
+    if (!$args{id} || $args{id} !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+
+    my $id = delete $args{id};
     
-    $self->request('GET', '/sessions/' . $args{id} . '/messages');
+    $self->request('GET', '/sessions/' . $id . '/messages', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
@@ -701,7 +745,7 @@ sub getSchedule {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Schedule ID should be numeric');
     }
     
@@ -745,6 +789,13 @@ sub getSchedules {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/schedules', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -772,7 +823,7 @@ sub getBulk {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Bulk ID should be numeric');
     }
     
@@ -816,6 +867,13 @@ sub getBulks {
         @_
     );
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/bulks', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -855,6 +913,13 @@ sub getChats {
         %paginatorArgs,
         @_
     );
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/chats', \%args);
     
@@ -900,11 +965,19 @@ sub getChat {
         @_
     );
     
-    if (!$args{phone} || $args{phone} =~ /\D/) {
+    if (!$args{phone} || $args{phone} !~ /^\+?\d+$/) {
         $self->error('Specify a valid phone number');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+
+    my $phone = delete $args{phone};
     
-    $self->request('GET', '/chats/' . $args{phone}, \%args);
+    $self->request('GET', '/chats/' . $phone, \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
@@ -915,7 +988,7 @@ sub getChat {
     }
 }
 
-=head3 getChat
+=head3 getPrice
 
 Check pricing for a new outbound message. See "send" command reference for available arguments list.
 
@@ -934,7 +1007,7 @@ sub getPrice {
     );
     
     $self->error('Either text or templateId should be specified') if (!$args{text} && !$args{templateId});
-    $self->error('Either phones, contacts or lists should be specified') if (!$args{phones} && !$args{contacts} && !$args{templates});
+    $self->error('Either phones, contacts or lists should be specified') if (!$args{phones} && !$args{contacts} && !$args{lists});
     
     my %requestArgs = convertArgs(\%args);
     
@@ -965,7 +1038,7 @@ sub deleteMessage {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Message ID should be numeric');
     }
     
@@ -995,7 +1068,7 @@ sub deleteReply {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Reply ID should be numeric');
     }
     
@@ -1025,7 +1098,7 @@ sub deleteSchedule {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Schedule ID should be numeric');
     }
     
@@ -1055,7 +1128,7 @@ sub deleteSession {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Session ID should be numeric');
     }
     
@@ -1089,7 +1162,7 @@ sub getTemplate {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Template ID should be numeric');
     }
     
@@ -1133,6 +1206,13 @@ sub getTemplates {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/templates', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1160,7 +1240,7 @@ sub deleteTemplate {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Template ID should be numeric');
     }
     
@@ -1251,6 +1331,10 @@ sub updateTemplate {
     
     $self->error('Template id, text and body should be specified') if (!$args{id} || !$args{name} || !$args{body});
     
+    if (!$args{id} || $args{id} !~ /^\d+$/) {
+        $self->error("Template ID should be numeric");
+    }
+    
     my %requestArgs;
     
     while ((my $key, my $value) = each(%args)){
@@ -1261,7 +1345,7 @@ sub updateTemplate {
         my $newKey = 'template[' . lcfirst(decamelize($key)) . ']';
         $requestArgs{$newKey} = $value;
     }    
-    
+
     $self->request('PUT', '/templates/' . $args{id}, \%requestArgs);    
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1308,7 +1392,7 @@ sub getMessagingStats {
     my %args = (
         by      => 'off',
         start   => undef,
-        end     => undef
+        end     => undef,
         @_
     );    
     
@@ -1358,9 +1442,16 @@ sub getSpendingStats {
     my %args = (
         %paginatorArgs,
         start   => undef,
-        end     => undef
+        end     => undef,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/stats/spending', \%args);
     
@@ -1402,6 +1493,13 @@ sub getInvoices {
         @_
     );
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/invoices', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1433,7 +1531,7 @@ sub getContact {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
     
@@ -1482,6 +1580,13 @@ sub getContacts {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/contacts', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1509,7 +1614,7 @@ sub deleteContact {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
     
@@ -1574,6 +1679,13 @@ sub addContact {
     
     $self->error('Contact phone and at least one list should be specified') if (!$args{phone} || !$args{lists});
     
+    if ($args{phone} !~ /^\+?\d+$/) {
+        $self->error('Specify a valid phone number');
+    }
+    if (ref $args{lists} ne 'ARRAY' || join(",", $args{lists}) !~ /\d+(,\d+)*/) {
+        $self->error('Specify a valid array of numeric list ids');
+    }
+
     my %requestArgs = convertArgs(\%args);
     
     $self->request('POST', '/contacts', \%requestArgs);    
@@ -1643,6 +1755,16 @@ sub updateContact {
     
     $self->error('Contact ID, phone and at least one list should be specified') if (!$args{id} || !$args{phone} || !$args{lists});
         
+    if ($args{id} !~ /^\d+$/) {
+        $self->error('Contact ID should be numeric');
+    }
+    if ($args{phone} !~ /^\+?\d+$/) {
+        $self->error('Specify a valid phone number');
+    }
+    if (ref $args{lists} ne 'ARRAY' || join(",", $args{lists}) !~ /\d+(,\d+)*/) {
+        $self->error('Specify a valid array of numeric list ids');
+    }
+
     my %requestArgs = convertArgs(\%args);
     
     $self->request('PUT', '/contacts/' . $args{id}, \%requestArgs);    
@@ -1686,11 +1808,19 @@ sub getContactLists {
         @_
     );
     
-    if ($args{id} =~ /\D/) {
+    if (!$args{id} || $args{id} !~ /^\d+$/) {
         $self->error('Contact ID should be numeric');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+
+    my $id = delete $args{id};
     
-    $self->request('GET', '/contacts/' . $args{id} . '/lists', \%args);
+    $self->request('GET', '/contacts/' . $id . '/lists', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
@@ -1717,7 +1847,7 @@ sub getUnsubscribedContact {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Unsubscriber ID should be numeric');
     }
     
@@ -1761,6 +1891,13 @@ sub getUnsubscribedContacts {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/unsubscribers', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1797,7 +1934,9 @@ sub unsubscribeContact {
         @_
     );
     
-    $self->error('Contact phone number should be specified') if (!$args{phone});    
+    if (!$args{phone} || $args{phone} !~ /^\+?\d+$/) {
+        $self->error('Specify a valid phone number');
+    }
     
     my %requestArgs = convertArgs(\%args);
     
@@ -1830,7 +1969,7 @@ sub getCustomField {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Custom field ID should be numeric');
     }
     
@@ -1874,6 +2013,13 @@ sub getCustomFields {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/customfields', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -1901,7 +2047,7 @@ sub deleteCustomField {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Custom field ID should be numeric');
     }
     
@@ -1959,6 +2105,10 @@ sub addCustomField {
 Update existing custom field.
 
 =over 4
+
+=item id
+
+Custom field id.
 
 =item name
 
@@ -2025,7 +2175,7 @@ sub updateCustomFieldValue {
         @_
     );
     
-    $self->error('Custom field ID, value and contact ID hould be specified') if (!$args{id} || !$args{contact_id} || !$args{value});
+    $self->error('Custom field ID, value and contact ID hould be specified') if (!$args{id} || !$args{contactId} || !$args{value});
     
     my %requestArgs = convertArgs(\%args);
     
@@ -2046,9 +2196,9 @@ sub updateCustomFieldValue {
 
 =head3 getList
 
-Get a single list. Receives "id" of template as a parameter. Example:
+Get a single list. Receives "id" of the list as a parameter. Example:
 
-  $template = $tm->getList(31322);
+  $list = $tm->getList(31322);
 
 =cut
 
@@ -2060,7 +2210,7 @@ sub getList {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
     
@@ -2104,6 +2254,13 @@ sub getLists {
         @_
     );    
     
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
+    
     $self->request('GET', '/lists', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
@@ -2131,7 +2288,7 @@ sub deleteList {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
     
@@ -2211,7 +2368,7 @@ List contacts.
 
 =cut
 
-sub updateList {
+sub addContactsToList {
     my $self = shift || undef;
     if (!defined $self) {
         return undef;
@@ -2219,7 +2376,6 @@ sub updateList {
     
     my %args = (
         id  => undef,
-        %listsArgs,
         @_
     );
     
@@ -2268,60 +2424,23 @@ sub getListContacts {
         @_
     );
     
-    if ($args{id} =~ /\D/) {
+    my $id = delete $args{id};
+    
+    if (!$id || $id !~ /^\d+$/) {
         $self->error('List ID should be numeric');
     }
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
-    $self->request('GET', '/lists/' . $args{id} . '/contacts', \%args);
+    $self->request('GET', '/lists/' . $id . '/contacts', \%args);
     
     my $response = from_json($self->getClient()->responseContent());
     
     if ($self->getClient()->responseCode() ne '200') {
-        $self->error($response->{message});
-    } else {    
-        return $response;
-    }
-}
-
-=head3 updateContactsInList
-
-Assign contacts to the specified list.
-
-=over 4
-
-=item id
-
-List id.
-
-=item contacts
-
-List contacts.
-
-=back
-
-=cut
-
-sub updateContactInList {
-    my $self = shift || undef;
-    if (!defined $self) {
-        return undef;
-    }
-    
-    my %args = (
-        id  => undef,
-        %listsArgs,
-        @_
-    );
-    
-    $self->error('List ID and least one contact should be specified') if (!$args{id} || !$args{contacts});
-    
-    my %requestArgs = convertArgs(\%args);    
-    
-    $self->request('PUT', '/lists/' . $args{id} . '/contacts', \%requestArgs);    
-    
-    my $response = from_json($self->getClient()->responseContent());
-    
-    if ($self->getClient()->responseCode() ne '201') {
         $self->error($response->{message});
     } else {    
         return $response;
@@ -2354,7 +2473,6 @@ sub deleteContactsFromList {
     
    my %args = (
         id  => undef,
-        %listsArgs,
         @_
     );
     
@@ -2392,7 +2510,7 @@ sub getDedicatedNumber {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Number ID should be numeric');
     }
     
@@ -2407,7 +2525,7 @@ sub getDedicatedNumber {
     }
 }
 
-=head3 getContacts
+=head3 getDedicatedNumbers
 
 Get all bought dedicated numbers. Optional arguments:
 
@@ -2433,9 +2551,15 @@ sub getDedicatedNumbers {
     
     my %args = (
         %paginatorArgs,
-        shared  => FALSE,
         @_
     );    
+    
+    if ($args{page} !~ /^\d+$/) {
+        $self->error("page should be numeric");
+    }
+    if ($args{limit} !~ /^\d+$/) {
+        $self->error("limit should be numeric");
+    }
     
     $self->request('GET', '/numbers', \%args);
     
@@ -2448,7 +2572,7 @@ sub getDedicatedNumbers {
     }
 }
 
-=head3 getContacts
+=head3 searchDedicatedNumbers
 
 Find available dedicated numbers to buy. Arguments:
 
@@ -2489,7 +2613,7 @@ sub searchDedicatedNumbers {
     }
 }
 
-=head3 addContact
+=head3 buyDedicatedNumber
 
 Buy a dedicated number and assign it to the specified account.
 
@@ -2537,15 +2661,15 @@ sub buyDedicatedNumber {
     }
 }
 
-=head3 cacnelDedicatedNumber
+=head3 cancelDedicatedNumber
 
 Cancel dedicated number subscription. Receives "id" of dedicated number as a parameter. Example:
 
-  $tm->deleteDedicatedNumber(334223);
+  $tm->cancelDedicatedNumber(334223);
 
 =cut
 
-sub cacnelDedicatedNumber {
+sub cancelDedicatedNumber {
     my $self = shift || undef;
     if (!defined $self) {
         return undef;
@@ -2553,7 +2677,7 @@ sub cacnelDedicatedNumber {
     
     my $id = shift;
     
-    if ($id =~ /\D/) {
+    if (!defined $id || $id !~ /^\d+$/) {
         $self->error('Dedicated number ID should be numeric');
     }
     
@@ -2649,24 +2773,25 @@ sub _buildAccessors {
     my @attributes = qw(BaseUrl Username Token UserAgent Client);
 
     for my $attribute (@attributes){
-        my $set_method = "
-        sub {
-        my \$self = shift;
-        \$self->{'_config'}{lc('$attribute')} = shift;
-        return \$self->{'_config'}{lc('$attribute')};
-        }";
+        my $local_attribute = $attribute;
 
-        my $get_method = "
-        sub {
-        my \$self = shift;
-        return \$self->{'_config'}{lc('$attribute')};
-        }";
+        my $set_method = sub {
+            my $self = shift;
+            $self->{'_config'}{$local_attribute} = shift;
+            return $self->{'_config'}{$local_attribute};
+        };
+
+        my $get_method = sub {
+            my $self = shift;
+            return $self->{'_config'}{$local_attribute};
+        };
 
 
         {
             no strict 'refs';
-            *{'Net::SMS::TextmagicRest::set'.$attribute} = eval $set_method ;
-            *{'Net::SMS::TextmagicRest::get'.$attribute} = eval $get_method ;
+            no warnings 'redefine';
+            *{'Net::SMS::TextmagicRest::set'.$attribute} = $set_method;
+            *{'Net::SMS::TextmagicRest::get'.$attribute} = $get_method;
         }
 
     }
@@ -2686,7 +2811,7 @@ sub _buildClient {
     $client->addHeader('X-TM-Username', $self->getUsername());
     $client->addHeader('X-TM-Key', $self->getToken());
     $client->addHeader('Content-type', 'application/x-www-form-urlencoded');
-    $client->getUseragent()->agent("Net::SMS::TextmagicRest/" . $VERSION);
+    $client->getUseragent()->agent($self->getUserAgent());
     
     $self->setClient($client);
 
