@@ -161,7 +161,9 @@ sub new {
 
 =head3 getUserInfo
 
-Returns User resource which represents current user account infromation.
+Returns User resource which represents current user account information. Example:
+
+  $user = $tm->getUserInfo();
 
 =over 4
 
@@ -243,7 +245,7 @@ hash (not a hash reference) with keys matching the keys returned from
 C<getUserInfo>. See the documentation of that method for details. The keys
 C<firstName> and C<lastName> are required.
 
-    $tm->setUserInfo(firstName => "First", lastName => "Last", currency => { id => "USD" });
+    $tm->setUserInfo(firstName => "First", lastName => "Last");
 
 =cut
 
@@ -288,6 +290,14 @@ sub setUserInfo {
 Send outbound SMS message to one or multiple phone numbers, contacts or lists.
 This method can be also used for scheduling messages for sending it later.
 Method can return a link to Session resource, Bulk resource or Schedule resource.
+Example:
+
+  $result = $tm->send(
+      text    => "This is a test",
+      phones  => \@sendingPhones,
+      contacts=> \@sendingContacts,
+      lists   => \@sendingLists,
+  );
 
 =over 4
 
@@ -372,7 +382,7 @@ sub send {
 
 Get a single outgoing message. Receives "id" of message as a parameter. Example:
 
-  %message = $tm->getMessage(4820993);
+  $message = $tm->getMessage(4820993);
 
 Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-a-specific-message-details
 
@@ -403,7 +413,11 @@ sub getMessage {
 
 =head3 getMessages
 
-Get all user outbound messages. Optional arguments:
+Get all user outbound messages. Example:
+
+  $response = $tm->getMessages(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -454,7 +468,7 @@ sub getMessages {
 
 Get a single outgoing message. Receives "id" of message as a parameter. Example:
 
-  %message = $tm->getReply(9463004);
+  $message = $tm->getReply(9463004);
 
 Output format description: https://www.textmagic.com/docs/api/receive-sms/#get-a-single-inbound-message
 
@@ -485,7 +499,11 @@ sub getReply {
 
 =head3 getReplies
 
-Get all inbox messages. Optional arguments:
+Get all inbox messages. Example:
+
+  $response = $tm->getReplies(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -536,7 +554,7 @@ sub getReplies {
 
 Get a message session. Receives "id" of session as a parameter. Example:
 
-  %message = $tm->getSession(31545);
+  $session = $tm->getSession(31545);
 
 Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-a-specific-session8217s-details
 
@@ -567,7 +585,11 @@ sub getSession {
 
 =head3 getSessions
 
-Get all sending sessions. Arguments:
+Get all sending sessions. Example:
+
+  $response = $tm->getSessions(page => 2);
+
+Optional arguments are:
 
 =over 4
 
@@ -616,7 +638,11 @@ sub getSessions {
 
 =head3 getSessionMessages
 
-Fetch messages by given session id. Arguments:
+Fetch messages by given session id. Example:
+
+  $response = $tm->getSessionMessages(id => 1011539);
+
+Arguments:
 
 =over 4
 
@@ -676,7 +702,7 @@ sub getSessionMessages {
 
 Get message sending schedule. Receives "id" of session as a parameter. Example:
 
-  %message = $tm->getSchedule(382);
+  $schedule = $tm->getSchedule(382);
 
 Output format description: https://www.textmagic.com/docs/api/schedule-sms/#get-a-single-scheduled-message
 
@@ -707,7 +733,11 @@ sub getSchedule {
 
 =head3 getSchedules
 
-Get all scheduled messages. Optional arguments:
+Get all scheduled messages. Example:
+
+  $response = $tm->getSchedules(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -758,7 +788,7 @@ sub getSchedules {
 
 Get bulk message session status. Receives "id" of bulk session as a parameter. Example:
 
-  %message = $tm->getBulk(994135);
+  $bulk = $tm->getBulk(994135);
 
 Output format description: https://www.textmagic.com/docs/api/send-sms/
 
@@ -789,7 +819,11 @@ sub getBulk {
 
 =head3 getBulks
 
-Get all bulk message sessions. Arguments:
+Get all bulk message sessions. Example:
+
+  $response = $tm->getBulks(page => 2);
+
+Optional arguments are:
 
 =over 4
 
@@ -838,7 +872,11 @@ sub getBulks {
 
 =head3 getChats
 
-Get all chats. Arguments:
+Get all chats.
+
+  $response = $tm->getChats(page => 2);
+
+Optional arguments are:
 
 =over 4
 
@@ -887,7 +925,11 @@ sub getChats {
 
 =head3 getChat
 
-Fetch messages from chat with specified phone number. Arguments:
+Fetch messages from chat with specified phone number. Example:
+
+  $response = $tm->getChats(phone => 999123, page => 2);
+
+Arguments:
 
 =over 4
 
@@ -945,7 +987,14 @@ sub getChat {
 
 =head3 getPrice
 
-Check pricing for a new outbound message. See "send" command reference for available arguments list.
+Check pricing for a new outbound message. See "send" command reference for available arguments list. Example:
+
+  $result = $tm->getPrice(
+    text    => "This is a test",
+    phones  => \@sendingPhones,
+    contacts=> \@sendingContacts,
+    lists   => \@sendingLists,
+  );
 
 =over 4
 
@@ -1129,7 +1178,7 @@ sub deleteSession {
 
 Get a single template. Receives "id" of template as a parameter. Example:
 
-  %template = $tm->getTemplate(382);
+  $template = $tm->getTemplate(382);
 
 Output format description: https://www.textmagic.com/docs/api/sms-templates/#get-a-specific-template
 
@@ -1160,7 +1209,11 @@ sub getTemplate {
 
 =head3 getTemplates
 
-Get all user templates. Optional arguments:
+Get all user templates. Example:
+
+  $response = $tm->getTemplates(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -1348,7 +1401,11 @@ sub updateTemplate {
 
 =head3 getMessagingStats
 
-Return messaging statistics. Optional arguments:
+Return messaging statistics. Example:
+
+  $stat = $tm->getMessagingStats(by => "day");
+
+Optional arguments:
 
 =over 4
 
@@ -1396,7 +1453,11 @@ sub getMessagingStats {
 
 =head3 getSpendingStats
 
-Return spending statistics. Optional arguments:
+Return spending statistics. Examples:
+
+  $stat = $tm->getMessagingStats(limit => "30");
+
+Optional arguments:
 
 =over 4
 
@@ -1455,7 +1516,11 @@ sub getSpendingStats {
 
 =head3 getInvoices
 
-Get all user invoices. Arguments:
+Get all user invoices. Examples:
+
+  $response = $tm->getInvoices(page => 2);
+
+Arguments:
 
 =over 4
 
@@ -1541,7 +1606,11 @@ sub getContact {
 
 =head3 getContacts
 
-Get all user contacts. Optional arguments:
+Get all user contacts. Example:
+
+  $response = $tm->getContacts();
+
+Optional arguments:
 
 =over 4
 
@@ -1777,9 +1846,17 @@ sub updateContact {
 
 =head3 getContactLists
 
-Return lists which contact belongs to. Optional arguments:
+Return lists which contact belongs to. Example:
+
+  $response = $tm->getContactLists(id => 204535);
+
+Optional arguments:
 
 =over 4
+
+=item id
+
+Contact id.
 
 =item page
 
@@ -1865,7 +1942,11 @@ sub getUnsubscribedContact {
 
 =head3 getUnsubscribedContacts
 
-Get all contact have unsubscribed from your communication. Optional arguments:
+Get all contact have unsubscribed from your communication. Example:
+
+  $response = $tm->getUnsubscribedContacts(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -1960,7 +2041,7 @@ sub unsubscribeContact {
 
 Get a single custom field.. Receives "id" of template as a parameter. Example:
 
-  %cf = $tm->getCustomField(415);
+  $cf = $tm->getCustomField(415);
 
 Output format description: https://www.textmagic.com/docs/api/custom-fields/#get-a-specific-custom-field-details
 
@@ -1991,7 +2072,11 @@ sub getCustomField {
 
 =head3 getCustomFields
 
-Get all available custom fields. Optional arguments:
+Get all available custom fields. Example:
+
+  $response = $tm->getCustomFields(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -2238,7 +2323,11 @@ sub getList {
 
 =head3 getLists
 
-Get all user lists. Optional arguments:
+Get all user lists. Examples:
+
+  $response = $tm->getLists(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -2548,7 +2637,11 @@ sub getDedicatedNumber {
 
 =head3 getDedicatedNumbers
 
-Get all bought dedicated numbers. Optional arguments:
+Get all bought dedicated numbers. Example:
+
+  $response = $tm->getDedicatedNumbers(page => 2);
+
+Optional arguments:
 
 =over 4
 
@@ -2597,7 +2690,11 @@ sub getDedicatedNumbers {
 
 =head3 searchDedicatedNumbers
 
-Find available dedicated numbers to buy. Arguments:
+Find available dedicated numbers to buy. Example:
+
+  $response = $tm->searchDedicatedNumbers(county => "US", prefix => "4471");
+
+Arguments:
 
 =over 4
 
