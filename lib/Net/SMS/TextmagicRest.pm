@@ -15,7 +15,6 @@ use warnings;
 use diagnostics;
 
 use feature 'switch';
-#no warnings 'experimental::smartmatch';
 no if ($] >= 5.018), 'warnings' => 'experimental';
 
 use constant TRUE => 1;
@@ -280,79 +279,6 @@ sub setUserInfo {
     }
 }
 
-=head3 auth
-
-Authenticate user by given username and password. Returning a username and token that you should pass to the all requests (in X-TM-Username and X-TM-Key, respectively).
-
-=over 4
-
-=item username
-
-Account username or email.
-
-=item password
-
-Account password.
-
-=back
-
-=cut
-
-sub auth {
-    my $self = shift || undef;
-    if (!defined $self) {
-        return undef;
-    }
-    
-    my %args = (
-        username    => undef,
-        password    => undef,
-        @_
-    );
-    
-    $self->error('Username and password should be specified') if (!$args{username} || !$args{password});
-    
-    my %requestArgs;
-    
-    while ((my $key, my $value) = each(%args)){
-        my $newKey = lcfirst(decamelize($key));
-        $requestArgs{$newKey} = $value;
-    }    
-    
-    $self->request('POST', '/tokens', \%requestArgs);    
-    
-    my $response = from_json($self->getClient()->responseContent());
-    
-    if ($self->getClient()->responseCode() ne '200') {
-        $self->error($response->{message});
-    } else {    
-        return $response;
-    }
-}
-
-=head3 refresh
-
-Refresh current access token. Only non-expired tokens can be renewed
-
-=cut
-
-sub refresh {
-    my $self = shift || undef;
-    if(!defined $self) {
-      return undef;
-    }
-    
-    $self->request('GET', '/tokens/refresh');
-    
-    my $response = from_json($self->getClient()->responseContent());
-    
-    if ($self->getClient()->responseCode() ne '200') {
-        $self->error($response->{message});
-    } else {    
-        return $response;
-    }
-}
-
 ####################################################################################
 
 =head2 Messages
@@ -411,6 +337,8 @@ Optional. iCal RRULE parameter to create recurrent scheduled messages. When used
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/send-sms/
+
 =cut
 
 sub send {
@@ -446,6 +374,8 @@ Get a single outgoing message. Receives "id" of message as a parameter. Example:
 
   %message = $tm->getMessage(4820993);
 
+Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-a-specific-message-details
+
 =cut
 
 sub getMessage {
@@ -473,7 +403,7 @@ sub getMessage {
 
 =head3 getMessages
 
-Get all user oubound messages. Optional arguments:
+Get all user outbound messages. Optional arguments:
 
 =over 4
 
@@ -486,6 +416,8 @@ Fetch specified results page (default: 1).
 How many results to return (default: 10).
 
 =back
+
+Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-all-sent-messages
 
 =cut
 
@@ -523,6 +455,8 @@ sub getMessages {
 Get a single outgoing message. Receives "id" of message as a parameter. Example:
 
   %message = $tm->getReply(9463004);
+
+Output format description: https://www.textmagic.com/docs/api/receive-sms/#get-a-single-inbound-message
 
 =cut
 
@@ -565,6 +499,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/receive-sms/#get-all-inbound-messages
+
 =cut
 
 sub getReplies {
@@ -601,6 +537,8 @@ sub getReplies {
 Get a message session. Receives "id" of session as a parameter. Example:
 
   %message = $tm->getSession(31545);
+
+Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-a-specific-session8217s-details
 
 =cut
 
@@ -639,9 +577,11 @@ Fetch specified results page (default: 1).
 
 =item limit
 
+How many results to return (default: 10).
+
 =back
 
-How many results to return (default: 10).
+Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-all-sessions
 
 =cut
 
@@ -694,6 +634,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/sms-sessions/#get-messages-sent-during-a-specific-session
+
 =cut
 
 sub getSessionMessages {
@@ -736,6 +678,8 @@ Get message sending schedule. Receives "id" of session as a parameter. Example:
 
   %message = $tm->getSchedule(382);
 
+Output format description: https://www.textmagic.com/docs/api/schedule-sms/#get-a-single-scheduled-message
+
 =cut
 
 sub getSchedule {
@@ -777,6 +721,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/schedule-sms/#get-all-scheduled-messages
+
 =cut
 
 sub getSchedules {
@@ -813,6 +759,8 @@ sub getSchedules {
 Get bulk message session status. Receives "id" of bulk session as a parameter. Example:
 
   %message = $tm->getBulk(994135);
+
+Output format description: https://www.textmagic.com/docs/api/send-sms/
 
 =cut
 
@@ -854,6 +802,8 @@ Fetch specified results page (default: 1).
 =back
 
 How many results to return (default: 10).
+
+Output format description: https://www.textmagic.com/docs/api/send-sms/
 
 =cut
 
@@ -902,6 +852,8 @@ Fetch specified results page (default: 1).
 
 How many results to return (default: 10).
 
+Output format description: https://www.textmagic.com/docs/api/sms-chats/#get-all-chats
+
 =cut
 
 sub getChats {
@@ -949,9 +901,11 @@ Fetch specified results page (default: 1).
 
 =item limit
 
+How many results to return (default: 10).
+
 =back
 
-How many results to return (default: 10).
+Output format description: https://www.textmagic.com/docs/api/sms-chats/#get-messages-from-a-specific-chat
 
 =cut
 
@@ -993,6 +947,22 @@ sub getChat {
 
 Check pricing for a new outbound message. See "send" command reference for available arguments list.
 
+=over 4
+
+=item country
+
+2-letter ISO country code
+
+=item count
+
+How many numbers from this country specified in parameters
+
+=item sum
+
+Total cost for sending specified text to this country
+
+=back
+
 =cut
 
 sub getPrice {
@@ -1029,6 +999,8 @@ Delete a single message.. Receives "id" of message as a parameter. Example:
 
   $tm->deleteMessage(4820993);
 
+Returns TRUE when successful.
+
 =cut
 
 sub deleteMessage {
@@ -1058,6 +1030,8 @@ sub deleteMessage {
 Delete the incoming message. Receives "id" of reply as a parameter. Example:
 
   $tm->deleteReply(32184555);
+
+Returns TRUE when successful.
 
 =cut
 
@@ -1089,6 +1063,8 @@ Delete a message session, together with all nested messages. Receives "id" of sc
 
   $tm->deleteSchedule(1384);
 
+Returns TRUE when successful.
+
 =cut
 
 sub deleteSchedule {
@@ -1118,6 +1094,8 @@ sub deleteSchedule {
 Delete a message session, together with all nested messages. Receives "id" of session as a parameter. Example:
 
   $tm->deleteSession(1384);
+
+Returns TRUE when successful.
 
 =cut
 
@@ -1152,6 +1130,8 @@ sub deleteSession {
 Get a single template. Receives "id" of template as a parameter. Example:
 
   %template = $tm->getTemplate(382);
+
+Output format description: https://www.textmagic.com/docs/api/sms-templates/#get-a-specific-template
 
 =cut
 
@@ -1194,6 +1174,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/sms-templates/#get-all-templates
+
 =cut
 
 sub getTemplates {
@@ -1230,6 +1212,8 @@ sub getTemplates {
 Delete a single template. Receives "id" of template as a parameter. Example:
 
   $tm->deleteSession(1384);
+
+Returns TRUE when successful.
 
 =cut
 
@@ -1382,6 +1366,8 @@ Optional. End date in unix timestamp format. Default is now.
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/statistics/#get-messaging-statistics
+
 =cut
 
 sub getMessagingStats {
@@ -1410,7 +1396,7 @@ sub getMessagingStats {
 
 =head3 getSpendingStats
 
-Return messaging statistics. Optional arguments:
+Return spending statistics. Optional arguments:
 
 =over 4
 
@@ -1431,6 +1417,8 @@ Optional. Start date in unix timestamp format. Default is 7 days ago.
 Optional. End date in unix timestamp format. Default is now.
 
 =back
+
+Output format description: https://www.textmagic.com/docs/api/statistics/#get-spending-statistics
 
 =cut
 
@@ -1477,9 +1465,11 @@ Fetch specified results page (default: 1).
 
 =item limit
 
+How many results to return (default: 10).
+
 =back
 
-How many results to return (default: 10).
+Output format description: https://www.textmagic.com/docs/api/invoices/#get-all-invoices
 
 =cut
 
@@ -1521,6 +1511,8 @@ sub getInvoices {
 Get a single contact. Receives "id" of template as a parameter. Example:
 
   $contact = $tm->getContact(334223);
+
+Output format description: https://www.textmagic.com/docs/api/contacts/#get-a-specific-contact-details
 
 =cut
 
@@ -1567,6 +1559,8 @@ Should shared contacts to be included (default FALSE).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/contacts/#get-all-contacts
+
 =cut
 
 sub getContacts {
@@ -1604,6 +1598,8 @@ sub getContacts {
 Delete a single contact. Receives "id" of contact as a parameter. Example:
 
   $tm->deleteContact(334223);
+
+Returns TRUE when successful.
 
 =cut
 
@@ -1795,6 +1791,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/lists/#get-a-specific-list-details
+
 =cut
 
 sub getContactLists {
@@ -1838,6 +1836,8 @@ Get a single unsubscribed contact. Receives "id" of template as a parameter. Exa
 
   $template = $tm->getUnsubscribedContact(4398);
 
+Output format description: https://www.textmagic.com/docs/api/contacts/
+
 =cut
 
 sub getUnsubscribedContact {
@@ -1878,6 +1878,8 @@ Fetch specified results page (default: 1).
 How many results to return (default: 10).
 
 =back
+
+Output format description: https://www.textmagic.com/docs/api/contacts/
 
 =cut
 
@@ -1960,6 +1962,8 @@ Get a single custom field.. Receives "id" of template as a parameter. Example:
 
   %cf = $tm->getCustomField(415);
 
+Output format description: https://www.textmagic.com/docs/api/custom-fields/#get-a-specific-custom-field-details
+
 =cut
 
 sub getCustomField {
@@ -2001,6 +2005,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/custom-fields/#get-all-custom-fields
+
 =cut
 
 sub getCustomFields {
@@ -2037,6 +2043,8 @@ sub getCustomFields {
 Delete a single custom field. Receives "id" of template as a parameter. Example:
 
   $tm->deleteCustomField(384);
+
+Returns TRUE when successful.
 
 =cut
 
@@ -2201,6 +2209,8 @@ Get a single list. Receives "id" of the list as a parameter. Example:
 
   $list = $tm->getList(31322);
 
+Output format description: https://www.textmagic.com/docs/api/lists/#get-a-specific-list-details
+
 =cut
 
 sub getList {
@@ -2242,6 +2252,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/lists/#get-all-lists
+
 =cut
 
 sub getLists {
@@ -2278,6 +2290,8 @@ sub getLists {
 Delete a single list. Receives "id" of template as a parameter. Example:
 
   $tm->deleteList(31332);
+
+Returns TRUE when successful.
 
 =cut
 
@@ -2411,6 +2425,8 @@ How many results to return (default: 10).
 
 =back
 
+Output format description: https://www.textmagic.com/docs/api/contacts/#get-all-contacts
+
 =cut
 
 sub getListContacts {
@@ -2464,6 +2480,8 @@ List contacts.
 
 =back
 
+Returns TRUE when successful.
+
 =cut
 
 sub deleteContactsFromList {
@@ -2500,6 +2518,8 @@ sub deleteContactsFromList {
 Get a single dedicated number.. Receives "id" of template as a parameter. Example:
 
   $number = $tm->getDedicatedNumber(334223);
+
+Output format description: https://www.textmagic.com/docs/api/sender-settings/#get-available-sender-settings
 
 =cut
 
@@ -2541,6 +2561,8 @@ Fetch specified results page (default: 1).
 How many results to return (default: 10).
 
 =back
+
+Output format description: https://www.textmagic.com/docs/api/numbers/#get-all-your-dedicated-numbers
 
 =cut
 
@@ -2588,6 +2610,8 @@ ISO 2-letter dedicated number country ID (e.g. DE for Germany).
 Optional. Desired number prefix. Should include country code (e.g. 447 for GB)
 
 =back
+
+Output format description: https://www.textmagic.com/docs/api/numbers/#get-dedicated-numbers-available-for-a-purchase
 
 =cut
 
@@ -2667,6 +2691,8 @@ sub buyDedicatedNumber {
 Cancel dedicated number subscription. Receives "id" of dedicated number as a parameter. Example:
 
   $tm->cancelDedicatedNumber(334223);
+
+Returns TRUE when successful.
 
 =cut
 

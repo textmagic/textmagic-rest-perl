@@ -429,13 +429,6 @@ my @add_metadata = (
         min_params => { phone => "+013215555555", country => "US", userId => "4321" },
     },
     {
-        method => "auth",
-        http_method => "POST",
-        min_params => { username => "testuser", password => "passwd" },
-        target => "tokens",
-        code => 200
-    },
-    {
         method => "searchDedicatedNumbers",
         http_method => "GET",
         code => 200,

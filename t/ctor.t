@@ -2,7 +2,7 @@ use JSON;
 use Net::SMS::TextmagicRest;
 use REST::Client;
 use Test::MockModule;
-use Test::More tests => 14;
+use Test::More tests => 9;
 
 # Variables capturing data passed into or out of the REST client.
 my $injected_json = "{}";
@@ -62,30 +62,3 @@ eval {
     fail("should have thrown with empty baseURL");
 };
 like ($@, qr/No username or token supplied/);
-
-# 
-# auth() is tested in crud.t
-#
-
-# 
-# refresh success case
-#
-$injected_json = JSON::encode_json({ success => "ok" });
-
-my $resp = $tm->refresh();
-cmp_ok($called{GET}, '==', 1, "calling refresh() should make a GET call to the server");
-cmp_ok($captured_resource, 'eq', "/tokens/refresh", "refresh() called to the expected uri /tokens/refresh");
-is_deeply($resp, { success => "ok" }, "the message returned from refresh was successfully decoded from JSON");
-
-# 
-# server error response
-#
-$injected_code = 500;
-$injected_json = JSON::encode_json({ message => "test error message" });
-eval {
-    $called{GET} = 0;
-    $tm->refresh();
-    fail("refresh should throw when the server returns an error code");
-};
-cmp_ok($called{GET}, '==', 1, "calling refresh should make a GET call to the server");
-like($@, qr/test error message/, "expected error message wasn't thrown");
