@@ -21,7 +21,20 @@ Example usage:
 
 ```perl
 
-use Net::SMS:TextmagicRest
+use Net::SMS::TextmagicRest;
+
+# Ask user for numeric input
+sub readNumber {
+    my $text = shift;
+
+    print "$text: ";
+    my $choice = <STDIN>;
+    chomp $choice;
+
+    $choice =~ s/^\s+|\s+$//g;
+
+    return $choice;
+}
   
 my $tm = Net::SMS::TextmagicRest->new(
     username => "test",
