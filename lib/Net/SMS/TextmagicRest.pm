@@ -46,7 +46,6 @@ our %messagesArgs = (
     referenceId => undef,
     from        => undef,
     rrule       => undef,
-    dummy       => FALSE,
 );
 
 our %contactsArgs = (
