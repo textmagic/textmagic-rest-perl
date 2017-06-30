@@ -68,7 +68,7 @@ my $resp = $tm->send(text => $test_text, phones => [ $test_tel1, $test_tel2 ]);
 
 cmp_ok($called{POST}, '==', 1, "Should have posted a message");
 cmp_ok($captured_resource, 'eq', '/messages', "Should post to /messages");
-is_deeply(JSON::decode_json($captured_data), { text => $test_text, phones => "$test_tel1,$test_tel2", dummy => 0, contacts => undef, sendingTime => undef, cutExtra => 0, templateId => undef, partsCount => undef, lists => undef, referenceId => undef, from => undef, rrule => undef }, "Posted data should match arguments passed");
+is_deeply(JSON::decode_json($captured_data), { text => $test_text, phones => "$test_tel1,$test_tel2", contacts => undef, sendingTime => undef, cutExtra => 0, templateId => undef, partsCount => undef, lists => undef, referenceId => undef, from => undef, rrule => undef }, "Posted data should match arguments passed");
 is_deeply($resp, { success => "ok" }, "Response JSON is as expected");
 
 #
